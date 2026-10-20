@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplicação Câmara Avançada - PAP</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; }
+
+        /* Visor da câmara */
+        .viewer-container { position: relative; flex: 1; width: 100%; max-height: calc(100vh - 140px); background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        video.mirror { transform: scaleX(-1); }
+
+        /* Indicador de Gravação Ativa */
+        .recording-badge { position: absolute; top: 20px; left: 20px; background: rgba(255, 0, 0, 0.8); color: white; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; display: none; align-items: center; gap: 6px; z-index: 6; animation: pulse 1s infinite alternate; }
+        @keyframes pulse { from { opacity: 0.6; } to { opacity: 1; } }
+
+        /* Flash */
+        .flash-effect { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; opacity: 0; z-index: 5; pointer-events: none; }
+        .flash-effect.active { animation: flashAnim 0.3s ease-out; }
+        @keyframes flashAnim { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+        /* Seletor de Modo (Foto / Vídeo) */
+        .mode-selector { height: 35px; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; gap: 25px; color: #aaa; font-size: 13px; font-weight: 600; letter-spacing: 1px; z-index: 10; }
+        .mode-btn { background: none; border: none; color: #888; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        .mode-btn.active { color: #ffcc00; }
+
+        /* Barra Inferior */
+        .bottom-bar { height: 105px; background: rgba(0, 0, 0, 0.95); display: flex; align-items: center; justify-content: space-around; padding: 0 20px; z-index: 10; border-top: 1px solid #1a1a1a; }
+
+        /* Botões Dinâmicos do Obturador */
+        .shutter-btn { width: 70px; height: 70px; border-radius: 50%; background: #ffffff; border: 5px solid #000000; box-shadow: 0 0 0 4px #ffffff; cursor: pointer; transition: all 0.2s; position: relative; }
+        .shutter-btn:active { transform: scale(0.9); }
+        
+        /* Modificadores visuais para modo vídeo e gravação */
+        .shutter-btn.video-mode { background: #ff3b30; box-shadow: 0 0 0 4px #ffffff; }
+        .shutter-btn.recording { background: #ff3b30; border-radius: 20%; width: 55px; height: 55px; box-shadow: 0 0 0 4px #ffffff; }
+
+        .flip-btn { width: 45px; height: 45px; border-radius: 50%; background: #222222; border: none; color: #ffffff; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        
+        /* Miniatura com contador de itens na pasta */
+        .gallery-preview { width: 45px; height: 45px; border-radius: 8px; background: #222222; border: 2px solid #ffffff; background-size: cover; background-position: center; cursor: pointer; position: relative; display: flex; align-items: center; justify-content: center; }
+        .folder-badge { position: absolute; bottom: -5px; right: -5px; background: #007aff; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 1px solid white; }
+
+        /* Ecrã de Inicialização */
+        .init-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000000; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; gap: 20px; }
+        .init-btn { background: #ffffff; color: #000000; border: none; padding: 15px 40px; font-size: 16px; font-weight: bold; border-radius: 30px; cursor: pointer; }
+
+        /* Modal da Pasta Virtual (Galeria "Fotos") */
+        .gallery-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 200; display: none; flex-direction: column; color: white; }
+        .gallery-header { height: 60px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #222; }
+        .close-gallery { background: none; border: none; color: #007aff; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .gallery-grid { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; overflow-y: auto; align-content: start; }
+        .gallery-item { width: 100%; aspect-ratio: 1; background-size: cover; background-position: center; position: relative; background-color: #111; }
+        .video-icon { position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.6); padding: 2px 5px; border-radius: 4px; font-size: 10px; }
+
+        canvas { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="initOverlay" class="init-overlay">
+        <h2>Câmara Pro - PAP</h2>
+        <p style="color: #666; font-size: 14px; text-align: center; padding: 0 20px;">Permite o acesso ao hardware de vídeo e áudio.</p>
+        <button class="init-btn" onclick="startApp()">Abrir Câmara</button>
+    </div>
+
+    <div class="viewer-container">
+        <div id="recBadge" class="recording-badge">🔴 Gravar <span id="recTime">00:00</span></div>
+        <div id="flash" class="flash-effect"></div>
+        <video id="cameraView" autoplay playsinline class="mirror"></video>
+    </div>
+
+    <!-- Modos de Captura -->
+    <div class="mode-selector">
+        <button id="modeFoto" class="mode-btn active" onclick="changeMode('foto')">FOTO</button>
+        <button id="modeVideo" class="mode-btn" onclick="changeMode('video')">VÍDEO</button>
+    </div>
+
+    <div class="bottom-bar">
+        <!-- Pasta Virtual / Sincronização Local -->
+        <div id="preview" class="gallery-preview" onclick="openGallery()">
+            <span style="font-size: 18px;">📁</span>
+            <div id="folderCount" class="folder-badge">0</div>
+        </div>
+        
+        <!-- Obturador Inteligente -->
+        <button id="shutter" class="shutter-btn" onclick="handleAction()"></button>
+        
+        <!-- Alternador de Câmara -->
+        <button class="flip-btn" onclick="switchCamera()">🔄</button>
+    </div>
+
+    <!-- Modal da Galeria (Simulação do Álbum "Fotos / PAP_Camera") -->
+    <div id="galleryModal" class="gallery-modal">
+        <div class="gallery-header">
+            <h3>Pasta: 📁 PAP_Camera</h3>
+            <button class="close-gallery" onclick="closeGallery()">Concluído</button>
+        </div>
+        <div id="galleryGrid" class="gallery-grid">
+            <!-- Os ficheiros guardados entram aqui dinamicamente -->
+        </div>
+    </div>
+
+    <canvas id="captureCanvas"></canvas>
+
+    <script>
+        let currentStream = null;
+        let useFrontCamera = true;
+        let currentMode = 'foto'; // 'foto' ou 'video'
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let isRecording = false;
+        let db = null;
+        let recordTimerInterval = null;
+        let recordSeconds = 0;
+
+        // 1. Inicializar Base de Dados IndexedDB (Pasta Virtual Persistente)
+        const dbRequest = indexedDB.open("CameraPAP_DB", 1);
+        dbRequest.onupgradeneeded = function(e) {
+            let database = e.target.result;
+            if (!database.objectStoreNames.contains("media")) {
+                database.createObjectStore("media", { keyPath: "id", autoIncrement: true });
+            }
+        };
+        dbRequest.onsuccess = function(e) {
+            db = e.target.result;
+            updateGalleryPreview();
+        };
+
+        async function startApp() {
+            document.getElementById('initOverlay').style.display = 'none';
+            await initCamera();
+        }
+
+        // 2. Ligar Câmara (Captura vídeo E áudio para as gravações)
+        async function initCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+
+            const video = document.getElementById('cameraView');
+            const mode = useFrontCamera ? "user" : "environment";
+
+            try {
+                // Pedimos também o áudio para o modo vídeo
+                currentStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: mode, width: { ideal: 1280 }, height: { ideal: 720 } },
+                    audio: true
+                });
+                video.srcObject = currentStream;
+                video.muted = true; // Evita feedback de som ao vivo nas colunas
+
+                if (useFrontCamera) { video.classList.add('mirror'); } 
+                else { video.classList.remove('mirror'); }
+            } catch (err) {
+                console.error("Erro de hardware:", err);
+                alert("Erro ao aceder ao hardware. Verifica as permissões de vídeo e áudio.");
+            }
+        }
+
+        async function switchCamera() {
+            if (isRecording) return;
+            useFrontCamera = !useFrontCamera;
+            await initCamera();
+        }
+
+        // 3. Alternar Modos de Funcionamento
+        function changeMode(mode) {
+            if (isRecording) return;
+            currentMode = mode;
+            const shutter = document.getElementById('shutter');
+            
+            document.getElementById('modeFoto').classList.toggle('active', mode === 'foto');
+            document.getElementById('modeVideo').classList.toggle('active', mode === 'video');
+
+            if (mode === 'video') {
+                shutter.classList.add('video-mode');
+            } else {
+                shutter.classList.remove('video-mode');
+            }
+        }
+
+    
