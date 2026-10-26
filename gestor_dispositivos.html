@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Dispositivos - Consola CMD</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: "Courier New", Courier, monospace; background: #0c0c0e; color: #00ff00; margin: 0; padding: 20px; }
+        .container { max-width: 1100px; margin: auto; }
+        .grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; margin-top: 20px; }
+        .panel { background: #111; padding: 20px; border-radius: 8px; border: 1px solid #00ff00; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 13px; color: #888; margin-bottom: 4px; }
+        input, select { width: 100%; padding: 8px; background: #222; border: 1px solid #00ff00; color: #00ff00; font-family: monospace; }
+        button { cursor: pointer; border: 1px solid #00ff00; font-weight: 600; background: #000; color: #00ff00; padding: 10px; transition: 0.2s; }
+        button:hover { background: #00ff00; color: #000; }
+        .btn-del { color: #ff0000; border-color: #ff0000; padding: 2px 6px; font-size: 12px; }
+        .btn-del:hover { background: #ff0000; color: #000; }
+        .device-item { background: #1a1a1a; padding: 12px; margin-bottom: 10px; border-radius: 6px; cursor: pointer; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        .device-item:hover { border-color: #00ff00; }
+        .badge { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .badge-free { background: #003300; color: #00ff00; }
+        .badge-busy { background: #331a00; color: #ff9900; }
+        .cmd-box { background: #000; color: #fff; padding: 15px; border-radius: 6px; border: 1px solid #555; font-family: monospace; white-space: pre-wrap; word-break: break-all; margin-top: 10px; text-align: left; position: relative; }
+        .cmd-title { color: #00ff00; font-size: 12px; margin-bottom: 5px; font-weight: bold; }
+        .btn-copy { position: absolute; top: 5px; right: 5px; font-size: 11px; padding: 2px 6px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; margin-top: 15px; }
+        th, td { padding: 8px 0; border-bottom: 1px solid #222; }
+        th { color: #888; font-weight: 500; width: 35%; }
+        .toggle-line { cursor: pointer; padding: 2px 6px; border: 1px solid #ff9900; color: #ff9900; border-radius: 4px; font-size: 11px; }
+        .toggle-line:hover { background: #ff9900; color: #000; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>C:\> GESTOR_DISPOSITIVOS.EXE --CMD-MODE</h2>
+    <p style="color: #888; margin-top: -10px;">Controlo de Subsistemas 192.168.0.X a 192.168.1.254 via Linha de Comandos Nativa.</p>
+
+    <div class="grid">
+        <!-- Coluna Esquerda: Cadastro e Lista -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="panel">
+                <div class="cmd-title">> REGISTAR_PERIFERICO</div>
+                <div class="form-group">
+                    <label>Identificador (Nome)</label>
+                    <input type="text" id="devNome" placeholder="Ex: PC_ESTUDIO_01">
+                </div>
+                <div class="form-group">
+                    <label>Endereço IP Local</label>
+                    <input type="text" id="devIp" placeholder="192.168.1.50">
+                </div>
+                <div class="form-group">
+                    <label>Pasta de Destino (Local/Rede)</label>
+                    <input type="text" id="devPasta" placeholder="C:\PastaSegura">
+                </div>
+                <button style="width: 100%;" onclick="adicionarDispositivo()">INJECTAR NA REDE</button>
+            </div>
+
+            <div class="panel">
+                <div class="cmd-title">> INVENTARIO_ATALHOS</div>
+                <div id="deviceList" style="margin-top: 10px;"></div>
+            </div>
+        </div>
+
+        <!-- Coluna Direita: Gerador de Comandos CMD Interativos -->
+        <div class="panel" id="detailPanel">
+            <div class="cmd-title">> MONITOR_CONSOLA</div>
+            <p style="color: #888; font-size: 14px;">Selecione uma diretoria IP ou máquina remota no inventário para gerar os scripts de execução direta no CMD do Windows.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    let dispositivos = JSON.parse(localStorage.getItem('dev_cmd_db')) || [
+        { id: 1, nome: "PC_REDE_ESTUDIO", ip: "192.168.1.50", pasta: "C:\\CofreDados", emUso: false },
+        { id: 2, nome: "SERVIDOR_BACKUP", ip: "192.168.0.22", pasta: "D:\\Mapeamento", emUso: true }
+    ];
+
+    function salvarDados() {
+        localStorage.setItem('dev_cmd_db', JSON.stringify(dispositivos));
+        renderizarLista();
+    }
+
+    function adicionarDispositivo() {
+        const nome = document.getElementById('devNome').value.replace(/\s+/g, '_');
+        const ip = document.getElementById('devIp').value;
+        const pasta = document.getElementById('devPasta').value || "C:\\";
+
+        if (!nome || !ip) { alert("Erro: ID e IP em falta."); return; }
+
+        dispositivos.push({ id: Date.now(), nome, ip, pasta, emUso: false });
+        salvarDados();
+
+        document.getElementById('devNome').value = "";
+        document.getElementById('devIp').value = "";
+        document.getElementById('devPasta').value = "";
+    }
+
+    function removerDispositivo(id, e) {
+        e.stopPropagation();
+        dispositivos = dispositivos.filter(d => d.id !== id);
+        document.getElementById('detailPanel').innerHTML = `<div class="cmd-title">> MONITOR_CONSOLA</div><p style="color: #888;">Aguardando seleção...</p>`;
+        salvarDados();
+    }
+
+    function alternarLinha(id, e) {
+        e.stopPropagation();
+        const dev = dispositivos.find(d => d.id === id);
+        if (dev) {
+            dev.emUso = !dev.emUso;
+            salvarDados();
+            abrirPainelCMD(id);
+        }
+    }
+
+    function renderizarLista() {
+        const lista = document.getElementById('deviceList');
+        lista.innerHTML = "";
+        if (dispositivos.length === 0) {
+            lista.innerHTML = "<p style='color:#555;'>Lista vazia.</p>";
+            return;
+        }
+        dispositivos.forEach(d => {
+            const item = document.createElement('div');
+            item.className = "device-item";
+            item.onclick = () => abrirPainelCMD(d.id);
+            item.innerHTML = `
+                <div style="text-align:left;">
+                    <strong style="color:#00ff00;">${d.nome}</strong><br>
+                    <small style="color:#aaa;">${d.ip}</small>
+                    <div style="margin-top:5px;"><span class="badge ${d.emUso ? 'badge-busy' : 'badge-free'}">${d.emUso ? 'LINHA_OCUPADA' : 'LINHA_LIVRE'}</span></div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <span class="toggle-line" onclick="alternarLinha(${d.id}, event)">COMUTAR</span>
+                    <button class="btn-del" onclick="removerDispositivo(${d.id}, event)">X</button>
+                </div>
+            `;
+            lista.appendChild(item);
+        });
+    }
+
+    function copiarTexto(id) {
+        const txt = document.getElementById(id).innerText;
+        navigator.clipboard.writeText(txt);
+        alert("Comando copiado para a área de transferência!");
+    }
+
+    function abrirPainelCMD(id) {
+        const dev = dispositivos.find(d => d.id === id);
+        const painel = document.getElementById('detailPanel');
+        if (!dev) return;
+
+        let blocoComando = "";
+
+        if (dev.emUso) {
+            // Cenário 1: Linha em uso -> O meu PC executa comandos no Alvo pelo CMD
+            blocoComando = `
+                <p style="color:#ff9900; font-size:13px;">[FLUXO DIRETO ATIVO] - Use o CMD deste PC para gerir a máquina em ${dev.ip}.</p>
+                
+                <div class="cmd-title">Opção A: Aceder à Linha de Comandos do Alvo (WinRM/PowerShell)</div>
+                <div class="cmd-box" id="cmd1">Enter-PSSession -ComputerName ${dev.ip} -Credential Administrator
+<button class="btn-copy" onclick="copiarTexto('cmd1')">Copiar</button></div>
+
+                <div class="cmd-title">Opção B: Mapear e Abrir a Pasta do Dispositivo no CMD</div>
+                <div class="cmd-box" id="cmd2">net use Z: \\\\${dev.ip}\\c$ /user:Administrator
+pushd Z:\\ && dir
+<button class="btn-copy" onclick="copiarTexto('cmd2')">Copiar</button></div>
+            `;
+        } else {
+            // Cenário 2: Linha Livre -> O Alvo liga-se ao meu CMD para controlo inverso
+            blocoComando = `
+                <p style="color:#00ff00; font-size:13px;">[FLUXO INVERSO PERMITIDO] - Copie o script abaixo e execute-o no CMD do PC remoto (${dev.ip}) para que ele controle a consola deste sistema operativo.</p>
+                
+                <div class="cmd-title">Comando para Injetar no CMD do PC Remoto (Acesso Inverso via SSH/WinRM)</div>
+                <div class="cmd-box" id="cmd3"># Executar a partir de ${dev.ip} para assumir o controlo deste terminal:
+ssh Administrator@${window.location.hostname || "IP_DESTE_PC"}
+<button class="btn-copy" onclick="copiarTexto('cmd3')">Copiar</button></div>
+
+                <div class="cmd-title">Comando para Enviar Ficheiros para a Pasta Protegida via CMD</div>
+                <div class="cmd-box" id="cmd4">xcopy /E /I "C:\\AmostraFotos" "\\\\${dev.ip}\\${dev.pasta.replace(/:/g, '$')}"
+<button class="btn-copy" onclick="copiarTexto('cmd4')">Copiar</button></div>
+            `;
+        }
+
+        painel.innerHTML = `
+            <div class="cmd-title">> INFORMAÇÃO_LINHA_DE_COMANDOS: ${dev.nome}</div>
+            
+            <table>
+                <tr><th>IP DO ALVO</th><td style="color:#fff;">${dev.ip}</td></tr>
+                <tr><th>DIRETÓRIO ALVO</th><td>${dev.pasta}</td></tr>
