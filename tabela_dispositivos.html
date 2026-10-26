@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabela de Dispositivos e Controlo CMD</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: "Courier New", Courier, monospace; background: #0a0a0c; color: #00ff00; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: auto; }
+        .panel-top { background: #111; padding: 15px; border: 1px solid #00ff00; border-bottom: none; border-radius: 8px 8px 0 0; }
+        .form-inline { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-size: 12px; color: #888; margin-bottom: 4px; }
+        input { background: #222; border: 1px solid #00ff00; color: #00ff00; padding: 6px 10px; font-family: monospace; font-size: 13px; }
+        
+        /* Estilização Estrita da Tabela */
+        .table-container { background: #111; border: 1px solid #00ff00; border-radius: 0 0 8px 8px; overflow-x: auto; padding: 10px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+        th { background: #1a1a1a; color: #888; font-weight: bold; padding: 12px 10px; border-bottom: 2px solid #00ff00; }
+        td { padding: 10px; border-bottom: 1px solid #222; vertical-align: middle; }
+        tr:hover { background: #161616; }
+        
+        button { cursor: pointer; border: 1px solid #00ff00; background: #000; color: #00ff00; padding: 6px 12px; font-family: monospace; font-size: 12px; font-weight: bold; transition: 0.1s; }
+        button:hover { background: #00ff00; color: #000; }
+        .btn-danger { color: #ff3333; border-color: #ff3333; }
+        .btn-danger:hover { background: #ff3333; color: #000; }
+        
+        .badge { padding: 3px 6px; border-radius: 3px; font-size: 11px; font-weight: bold; display: inline-block; }
+        .badge-free { background: #002b00; color: #4ade80; border: 1px solid #00ff00; }
+        .badge-busy { background: #331a00; color: #ff9900; border: 1px solid #ff9900; }
+        
+        .cmd-output { background: #000; color: #fff; padding: 8px; border: 1px solid #555; font-size: 11px; white-space: pre-wrap; word-break: break-all; max-width: 320px; display: block; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 style="margin-bottom: 5px;">C:\> TABELA_DISPOSITIVOS.EXE</h2>
+    <p style="color: #888; margin-top: 0; font-size: 13px;">Consola de Gestão de Sub-redes (192.168.0.X a 192.168.1.254) integrada numa matriz.</p>
+
+    <!-- Formulário Superior para Inserir na Tabela -->
+    <div class="panel-top">
+        <div class="form-inline">
+            <div class="form-group">
+                <label>Identificador / Nome</label>
+                <input type="text" id="addNome" placeholder="PC_ESTUDIO_01" style="width: 160px;">
+            </div>
+            <div class="form-group">
+                <label>Endereço IP</label>
+                <input type="text" id="addIp" placeholder="192.168.1.50" style="width: 140px;">
+            </div>
+            <div class="form-group">
+                <label>Pasta de Destino</label>
+                <input type="text" id="addPasta" placeholder="C:\PastaSegura" style="width: 180px;">
+            </div>
+            <button type="button" onclick="adicionarAItemTabela()">[+] INSERIR LINHA</button>
+        </div>
+    </div>
+
+    <!-- Contentor Principal em Formato de Tabela -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Equipamento (ID)</th>
+                    <th>Endereço IP</th>
+                    <th>Pasta Associada</th>
+                    <th>Estado de Linha</th>
+                    <th>Ação de Linha</th>
+                    <th>Injeção CMD Windows (Vice-Versa)</th>
+                    <th>Gestão</th>
+                </tr>
+            </thead>
+            <tbody id="corpoTabela">
+                <!-- Linhas geradas dinamicamente via JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Inventário estruturado em matriz de dados
+    let inventario = JSON.parse(localStorage.getItem('tab_dev_db')) || [
+        { id: 1, nome: "ESTACAO_REMOTA_01", ip: "192.168.1.50", pasta: "C:\\CofreDados", emUso: true },
+        { id: 2, nome: "SERVER_MONITOR_02", ip: "192.168.0.22", pasta: "D:\\Mapeamento", emUso: false }
+    ];
+
+    function salvarTabela() {
+        localStorage.setItem('tab_dev_db', JSON.stringify(inventario));
+        renderizarTabela();
+    }
+
+    function adicionarAItemTabela() {
+        const nome = document.getElementById('addNome').value.trim().replace(/\s+/g, '_').toUpperCase();
+        const ip = document.getElementById('addIp').value.trim();
+        const pasta = document.getElementById('addPasta').value.trim() || "C:\\";
+
+        if (!nome || !ip) { alert("Erro: Preencha o Nome e o IP."); return; }
+
+        inventario.push({ id: Date.now(), nome, ip, pasta, emUso: false });
+        salvarTabela();
+
+        document.getElementById('addNome').value = "";
+        document.getElementById('addIp').value = "";
+        document.getElementById('addPasta').value = "";
+    }
+
+    function apagarLinha(id) {
+        inventario = inventario.filter(item => item.id !== id);
+        salvarTabela();
+    }
+
+    function comutarEstadoLinha(id) {
+        const item = inventario.find(item => item.id === id);
+        if (item) {
+            item.emUso = !item.emUso;
+            salvarTabela();
+        }
+    }
+
+    function renderizarTabela() {
+        const corpo = document.getElementById('corpoTabela');
+        corpo.innerHTML = "";
+
+        if (inventario.length === 0) {
+            corpo.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #555; padding: 20px;">Tabela Vazia. Sem dispositivos registados.</td></tr>`;
+            return;
+        }
+
+        inventario.forEach(item => {
+            const tr = document.createElement('tr');
+            
+            // Definição da lógica de controlo dinâmico dependendo da ocupação da linha (Vice-Versa)
+            let txtBadge = item.emUso ? "LINHA_OCUPADA" : "LINHA_LIVRE";
+            let classeBadge = item.emUso ? "badge-busy" : "badge-free";
+            let txtBotaoAcao = item.emUso ? "LIBERTAR" : "OCUPAR";
+            
+            let cmdScript = "";
+            if (item.emUso) {
+                // Linha em Uso: O meu PC controla o outro através destes comandos CMD
+                cmdScript = `:: VOCÊ CONTROLA O ALVO\nnet use Z: \\\\${item.ip}\\c$\nEnter-PSSession -ComputerName ${item.ip}`;
+            } else {
+                // Linha Livre: O outro PC/Periférico assume o controlo inverso deste terminal
+                cmdScript = `:: ALVO CONTROLA ESTE PC\nssh Administrator@${window.location.hostname || "IP_LOCAL"}\nxcopy /E "C:\\Fotos" "\\\\${item.ip}\\${item.pasta.replace(/:/g, '$')}"`;
+            }
+
+            tr.innerHTML = `
+                <td style="font-weight: bold; color: #fff;">${item.nome}</td>
+                <td style="font-family: monospace; color: #60a5fa;">${item.ip}</td>
+                <td style="color: #fbbf24; font-family: monospace;">${item.pasta}</td>
+                <td><span class="badge ${classeBadge}">${txtBadge}</span></td>
+                <td><button onclick="comutarEstadoLinha(${item.id})">${txtBotaoAcao}</button></td>
+                <td><code class="cmd-output">${cmdScript}</code></td>
+                <td><button class="btn-danger" onclick="apagarLinha(${item.id})">REMOVER</button></td>
+            `;
+            corpo.appendChild(tr);
+        });
+    }
+
+    // Inicialização da Matriz
+    window.onload = renderizarTabela;
+</script>
+
+</body>
+</html>
