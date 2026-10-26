@@ -3,67 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estrutura de Raiz</title>
+    <title>Controlo de Periféricos</title>
     <style>
-        body { font-family: sans-serif; background: #f4f6f9; padding: 20px; }
-        
-        /* Estilização da Tabela de Raiz */
-        .minha-tabela {
-            width: 100%;
-            border-collapse: collapse; /* Une as bordas das células numa linha única */
-            background: #ffffff;
+        :root {
+            --primary-color: #2c3e50;
+            --success-color: #2ecc71;
+            --warning-color: #f1c40f;
+            --danger-color: #e74c3c;
+            --bg-color: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 20px;
+            color: #333;
+        }
+
+        .table-container {
+            max-width: 100%;
+            overflow-x: auto;
+            background: #fff;
+            padding: 20px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             border-radius: 8px;
-            overflow: hidden;
         }
 
-        .minha-tabela th {
-            background-color: #1e293b;
-            color: #ffffff;
+        h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
             text-align: left;
-            padding: 12px 16px;
-            font-size: 14px;
         }
 
-        .minha-tabela td {
-            padding: 12px 16px;
-            border-bottom: 1px solid #e2e8f0;
-            color: #334155;
-            font-size: 13px;
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
         }
 
-        /* Efeito visual ao passar o rato na linha */
-        .minha-tabela tr:hover {
-            background-color: #f8fafc;
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
         }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        /* Badges de Estado */
+        .status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .status.disponivel { background-color: #d4edda; color: #155724; }
+        .status.em-uso { background-color: #fff3cd; color: #856404; }
+        .status.manutencao { background-color: #f8d7da; color: #721c24; }
+
+        /* Botões de Ação */
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            text-decoration: none;
+        }
+        .btn-edit { background-color: #3498db; color: white; }
+        .btn-edit:hover { background-color: #2980b9; }
     </style>
 </head>
 <body>
 
-    <table class="minha-tabela">
+<div class="table-container">
+    <h2>Inventário e Controlo de Periféricos</h2>
+    
+    <table>
         <thead>
             <tr>
-                <th>ID Periférico</th>
-                <th>Tipo de Equipamento</th>
-                <th>Endereço IP</th>
+                <th>ID</th>
+                <th>Equipamento</th>
+                <th>Marca/Modelo</th>
+                <th>Nº de Série</th>
+                <th>Utilizador / Local</th>
                 <th>Estado</th>
+                <th>Ações</th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td>PRN-01</td>
-                <td>Impressora Laser</td>
-                <td>192.168.1.50</td>
-                <td>Ativo</td>
+                <td>#001</td>
+                <td>Monitor 24"</td>
+                <td>Dell P2419H</td>
+                <td>MXL12345XYZ</td>
+                <td>Ana Silva (Marketing)</td>
+                <td><span class="status em-uso">Em Uso</span></td>
+                <td><button class="btn btn-edit">Editar</button></td>
             </tr>
             <tr>
-                <td>SCN-02</td>
-                <td>Scanner Industrial</td>
-                <td>192.168.1.60</td>
-                <td>Em Espera</td>
+                <td>#002</td>
+                <td>Teclado Mecânico</td>
+                <td>Logitech G413</td>
+                <td>LOG98765ABC</td>
+                <td>Stock - Armário B</td>
+                <td><span class="status disponivel">Disponível</span></td>
+                <td><button class="btn btn-edit">Editar</button></td>
+            </tr>
+            <tr>
+                <td>#003</td>
+                <td>Rato Sem Fios</td>
+                <td>HP Essential</td>
+                <td>HPM555444NN</td>
+                <td>TI (Suporte)</td>
+                <td><span class="status manutencao">Manutenção</span></td>
+                <td><button class="btn btn-edit">Editar</button></td>
+            </tr>
+            <tr>
+                <td>#004</td>
+                <td>Auscultadores c/ Mic</td>
+                <td>Jabra Evolve 20</td>
+                <td>JAB332211QQ</td>
+                <td>Carlos Reis (Vendas)</td>
+                <td><span class="status em-uso">Em Uso</span></td>
+                <td><button class="btn btn-edit">Editar</button></td>
             </tr>
         </tbody>
     </table>
+</div>
 
 </body>
 </html>
