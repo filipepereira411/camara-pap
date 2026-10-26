@@ -3,179 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão Integrada de Periféricos</title>
+    <title>Estrutura de Raiz</title>
     <style>
-        * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f8f9fa; color: #212529; margin: 0; padding: 30px; }
-        .container { max-width: 1280px; margin: auto; }
+        body { font-family: sans-serif; background: #f4f6f9; padding: 20px; }
         
-        h2 { font-weight: 600; color: #1e293b; margin-bottom: 5px; }
-        p.subtitle { color: #64748b; margin-top: 0; font-size: 14px; margin-bottom: 25px; }
+        /* Estilização da Tabela de Raiz */
+        .minha-tabela {
+            width: 100%;
+            border-collapse: collapse; /* Une as bordas das células numa linha única */
+            background: #ffffff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
 
-        /* Painel Superior de Inserção */
-        .panel-top { background: #ffffff; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .form-inline { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
-        .form-group { display: flex; flex-direction: column; flex: 1; min-width: 180px; }
-        label { font-size: 13px; font-weight: 500; color: #475569; margin-bottom: 6px; }
-        input { background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 8px 12px; border-radius: 6px; font-size: 14px; transition: border 0.15s ease; }
-        input:focus { outline: none; border-color: #3b82f6; }
-        
-        /* Componentes de Tabela Moderna */
-        .table-container { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 5px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
-        th { background: #f8fafc; color: #627d98; font-weight: 600; padding: 14px 16px; border-bottom: 2px solid #edf2f7; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
-        td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover { background-color: #f8fafc; }
-        
-        /* Botões */
-        button { cursor: pointer; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; padding: 8px 14px; font-size: 13px; font-weight: 500; border-radius: 6px; transition: all 0.15s ease; }
-        button:hover { background: #f1f5f9; border-color: #94a3b8; }
-        .btn-primary { background: #3b82f6; color: #ffffff; border: none; }
-        .btn-primary:hover { background: #2563eb; }
-        .btn-danger { color: #dc2626; border-color: #fca5a5; background: #fff5f5; }
-        .btn-danger:hover { background: #fee2e2; border-color: #ef4444; }
-        
-        /* Badges de Estado */
-        .badge { padding: 4px 8px; border-radius: 9999px; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 5px; }
-        .badge-free { background: #dcfce7; color: #166534; }
-        .badge-busy { background: #ffedd5; color: #9a3412; }
-        .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; }
-        .badge-free::before { background: #22c55e; }
-        .badge-busy::before { background: #f97316; }
-        
-        /* Zona de Código Limpa */
-        .cmd-output { background: #f8fafc; color: #334155; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; max-width: 350px; display: block; line-height: 1.4; }
+        .minha-tabela th {
+            background-color: #1e293b;
+            color: #ffffff;
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 14px;
+        }
+
+        .minha-tabela td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #334155;
+            font-size: 13px;
+        }
+
+        /* Efeito visual ao passar o rato na linha */
+        .minha-tabela tr:hover {
+            background-color: #f8fafc;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Gestor de Dispositivos e Periféricos</h2>
-    <p class="subtitle">Administração de redes locais e atribuição de fluxos bidirecionais (Sub-redes 192.168.0.X a 192.168.1.254).</p>
-
-    <!-- Formulário Superior Estilo Dashboard -->
-    <div class="panel-top">
-        <div class="form-inline">
-            <div class="form-group">
-                <label>Nome do Equipamento</label>
-                <input type="text" id="addNome" placeholder="Ex: PC Estúdio 01">
-            </div>
-            <div class="form-group">
-                <label>Endereço IP</label>
-                <input type="text" id="addIp" placeholder="192.168.1.50">
-            </div>
-            <div class="form-group">
-                <label>Pasta de Destino</label>
-                <input type="text" id="addPasta" placeholder="Ex: C:\PastaSegura">
-            </div>
-            <button type="button" class="btn-primary" onclick="adicionarAItemTabela()">Adicionar Linha</button>
-        </div>
-    </div>
-
-    <!-- Tabela Principal Clara -->
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Equipamento</th>
-                    <th>Endereço IP</th>
-                    <th>Pasta Associada</th>
-                    <th>Estado do Canal</th>
-                    <th>Comutação</th>
-                    <th>Instruções de Controlo (CMD/Terminal)</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody id="corpoTabela">
-                <!-- Conteúdo dinâmico via JavaScript -->
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<script>
-    // Base de dados local em array de objetos
-    let inventario = JSON.parse(localStorage.getItem('tab_clean_db')) || [
-        { id: 1, nome: "Estação Remota 01", ip: "192.168.1.50", pasta: "C:\\CofreDados", emUso: true },
-        { id: 2, nome: "Servidor Monitor 02", ip: "192.168.0.22", pasta: "D:\\Mapeamento", emUso: false }
-    ];
-
-    function salvarTabela() {
-        localStorage.setItem('tab_clean_db', JSON.stringify(inventario));
-        renderizarTabela();
-    }
-
-    function adicionarAItemTabela() {
-        const nome = document.getElementById('addNome').value.trim();
-        const ip = document.getElementById('addIp').value.trim();
-        const pasta = document.getElementById('addPasta').value.trim() || "C:\\";
-
-        if (!nome || !ip) { alert("Por favor, preencha os campos obrigatórios (Nome e IP)."); return; }
-
-        inventario.push({ id: Date.now(), nome, ip, pasta, emUso: false });
-        salvarTabela();
-
-        document.getElementById('addNome').value = "";
-        document.getElementById('addIp').value = "";
-        document.getElementById('addPasta').value = "";
-    }
-
-    function apagarLinha(id) {
-        if(confirm("Tem a certeza que deseja remover este dispositivo?")) {
-            inventario = inventario.filter(item => item.id !== id);
-            salvarTabela();
-        }
-    }
-
-    function comutarEstadoLinha(id) {
-        const item = inventario.find(item => item.id === id);
-        if (item) {
-            item.emUso = !item.emUso;
-            salvarTabela();
-        }
-    }
-
-    function renderizarTabela() {
-        const corpo = document.getElementById('corpoTabela');
-        corpo.innerHTML = "";
-
-        if (inventario.length === 0) {
-            corpo.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #64748b; padding: 30px;">Nenhum dispositivo registado na tabela.</td></tr>`;
-            return;
-        }
-
-        inventario.forEach(item => {
-            const tr = document.createElement('tr');
-            
-            let txtBadge = item.emUso ? "Linha Ocupada" : "Linha Livre";
-            let classeBadge = item.emUso ? "badge-busy" : "badge-free";
-            let txtBotaoAcao = item.emUso ? "Libertar Canal" : "Ocupar Canal";
-            
-            let cmdScript = "";
-            if (item.emUso) {
-                // Fluxo Direto: O utilizador controla a máquina remota
-                cmdScript = `net use Z: \\\\${item.ip}\\c$\nEnter-PSSession -ComputerName ${item.ip}`;
-            } else {
-                // Fluxo Inverso: A máquina remota ganha acesso técnico a este terminal (Vice-versa)
-                cmdScript = `ssh Administrator@${window.location.hostname || "IP_LOCAL"}\nxcopy /E "C:\\Fotos" "\\\\${item.ip}\\${item.pasta.replace(/:/g, '$')}"`;
-            }
-
-            tr.innerHTML = `
-                <td style="font-weight: 600; color: #1e293b;">${item.nome}</td>
-                <td style="font-family: monospace; color: #2563eb; font-weight: 500;">${item.ip}</td>
-                <td style="color: #475569; font-family: monospace;">${item.pasta}</td>
-                <td><span class="badge ${classeBadge}">${txtBadge}</span></td>
-                <td><button onclick="comutarEstadoLinha(${item.id})">${txtBotaoAcao}</button></td>
-                <td><code class="cmd-output">${cmdScript}</code></td>
-                <td><button class="btn-danger" onclick="apagarLinha(${item.id})">Remover</button></td>
-            `;
-            corpo.appendChild(tr);
-        });
-    }
-
-    window.onload = renderizarTabela;
-</script>
+    <table class="minha-tabela">
+        <thead>
+            <tr>
+                <th>ID Periférico</th>
+                <th>Tipo de Equipamento</th>
+                <th>Endereço IP</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>PRN-01</td>
+                <td>Impressora Laser</td>
+                <td>192.168.1.50</td>
+                <td>Ativo</td>
+            </tr>
+            <tr>
+                <td>SCN-02</td>
+                <td>Scanner Industrial</td>
+                <td>192.168.1.60</td>
+                <td>Em Espera</td>
+            </tr>
+        </tbody>
+    </table>
 
 </body>
 </html>
