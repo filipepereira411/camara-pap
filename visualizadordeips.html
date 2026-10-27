@@ -1,0 +1,394 @@
+```html
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aplica Opal | Gestor de Câmaras IP</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #141c2e;
+      --border: #26334a;
+      --text: #edf3ff;
+      --muted: #91a0b9;
+      --accent: #54e6b1;
+      --blue: #648cff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      padding: 22px 6%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      background: #0e1526;
+    }
+
+    .logo { font-size: 22px; font-weight: bold; }
+    .logo span { color: var(--accent); }
+
+    .badge {
+      color: var(--accent);
+      background: #16352f;
+      border-radius: 20px;
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: auto;
+      padding: 32px 20px;
+    }
+
+    h1 { margin-bottom: 8px; }
+    .subtitle { color: var(--muted); margin-bottom: 28px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .card, .section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+    }
+
+    .metric { color: var(--muted); font-size: 14px; }
+    .number { font-size: 32px; font-weight: bold; margin-top: 12px; }
+
+    .section { margin-bottom: 22px; }
+    .section h2 { font-size: 18px; margin-top: 0; }
+
+    .fields {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    input, select {
+      width: 100%;
+      background: #0b1222;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      color: white;
+      font-size: 14px;
+    }
+
+    button {
+      cursor: pointer;
+      border: 0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-weight: bold;
+      margin: 8px 8px 0 0;
+    }
+
+    .primary { background: var(--accent); color: #071a14; }
+    .secondary { background: #263754; color: white; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+
+    .notice {
+      padding: 14px;
+      border-radius: 8px;
+      background: #252b3b;
+      color: #dce5f6;
+      line-height: 1.6;
+      font-size: 14px;
+      margin-top: 16px;
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+
+    th, td {
+      padding: 14px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    th { color: var(--muted); font-weight: normal; }
+
+    .status {
+      color: #ffc56d;
+      background: #382d1d;
+      border-radius: 20px;
+      padding: 5px 9px;
+      font-size: 12px;
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 28px;
+    }
+
+    #message {
+      color: var(--accent);
+      margin-top: 14px;
+      font-size: 14px;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      padding: 25px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">APLICA <span>OPAL</span></div>
+    <div class="badge">PAINEL DE CÂMARAS</div>
+  </header>
+
+  <main>
+    <h1>Gestor de Câmaras IP</h1>
+    <p class="subtitle">
+      Descoberta e gestão de câmaras na tua rede local.
+    </p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="metric">Câmaras registadas</div>
+        <div class="number" id="total">0</div>
+      </div>
+      <div class="card">
+        <div class="metric">Online confirmadas</div>
+        <div class="number" id="online">0</div>
+      </div>
+      <div class="card">
+        <div class="metric">Intervalo configurado</div>
+        <div class="number" style="font-size:19px">192.168.x.x</div>
+      </div>
+    </div>
+
+    <section class="section">
+      <h2>Configuração da rede</h2>
+
+      <div class="fields">
+        <div>
+          <label for="startIP">IP inicial</label>
+          <input id="startIP" value="192.168.0.1"
+                 placeholder="192.168.0.1">
+        </div>
+        <div>
+          <label for="endIP">IP final</label>
+          <input id="endIP" value="192.168.1.254"
+                 placeholder="192.168.1.254">
+        </div>
+        <div>
+          <label for="cameraIP">IP de uma câmara conhecida</label>
+          <input id="cameraIP" placeholder="192.168.1.100">
+        </div>
+      </div>
+
+      <button class="primary" id="addButton">Adicionar câmara</button>
+      <button class="secondary" id="scanButton">Preparar descoberta</button>
+
+      <div class="notice">
+        <strong>Limitação do navegador:</strong>
+        esta página não consegue fazer uma varredura real da rede nem
+        confirmar se um IP está online. Para isso, liga-a a um serviço
+        local autorizado que descubra câmaras e comunique através de
+        protocolos compatíveis, como ONVIF.
+      </div>
+
+      <div id="message" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="section">
+      <h2>Câmaras registadas</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Endereço IP</th>
+              <th>Dispositivo</th>
+              <th>Estado</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="cameraList">
+            <tr>
+              <td colspan="4" class="empty">
+                Ainda não existem câmaras registadas.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Aplica Opal · Gestão de dispositivos autorizados
+  </footer>
+
+  <script>
+    const cameras = new Map();
+
+    const $ = id => document.getElementById(id);
+
+    function ipToNumber(ip) {
+      const parts = ip.trim().split(".");
+      if (parts.length !== 4) return null;
+
+      let result = 0;
+
+      for (const part of parts) {
+        if (!/^\d{1,3}$/.test(part)) return null;
+
+        const n = Number(part);
+        if (n < 0 || n > 255) return null;
+
+        result = result * 256 + n;
+      }
+
+      return result;
+    }
+
+    function validRange(start, end) {
+      const a = ipToNumber(start);
+      const b = ipToNumber(end);
+
+      if (a === null || b === null || a > b) return false;
+
+      // Limitar a ferramenta ao intervalo privado indicado.
+      const min = ipToNumber("192.168.0.1");
+      const max = ipToNumber("192.168.1.254");
+
+      return a >= min && b <= max && b - a <= 510;
+    }
+
+    function update() {
+      const list = $("cameraList");
+      $("total").textContent = cameras.size;
+      $("online").textContent = [...cameras.values()]
+        .filter(camera => camera.online === true).length;
+
+      list.replaceChildren();
+
+      if (cameras.size === 0) {
+        const row = list.insertRow();
+        const cell = row.insertCell();
+        cell.colSpan = 4;
+        cell.className = "empty";
+        cell.textContent = "Ainda não existem câmaras registadas.";
+        return;
+      }
+
+      for (const camera of cameras.values()) {
+        const row = list.insertRow();
+
+        const ipCell = row.insertCell();
+        ipCell.textContent = camera.ip;
+
+        const nameCell = row.insertCell();
+        nameCell.textContent = camera.name;
+
+        const statusCell = row.insertCell();
+        const badge = document.createElement("span");
+        badge.className = "status";
+        badge.textContent = camera.online ? "Online" : "Não verificado";
+        statusCell.appendChild(badge);
+
+        const actionsCell = row.insertCell();
+        const removeButton = document.createElement("button");
+        removeButton.className = "secondary";
+        removeButton.textContent = "Remover";
+
+        removeButton.addEventListener("click", () => {
+          cameras.delete(camera.ip);
+          update();
+          $("message").textContent = "Câmara removida da lista.";
+        });
+
+        actionsCell.appendChild(removeButton);
+      }
+    }
+
+    $("addButton").addEventListener("click", () => {
+      const ip = $("cameraIP").value.trim();
+
+      if (ipToNumber(ip) === null) {
+        $("message").textContent = "Introduz um endereço IP válido.";
+        return;
+      }
+
+      const min = ipToNumber("192.168.0.1");
+      const max = ipToNumber("192.168.1.254");
+      const value = ipToNumber(ip);
+
+      if (value < min || value > max) {
+        $("message").textContent =
+          "O IP deve estar entre 192.168.0.1 e 192.168.1.254.";
+        return;
+      }
+
+      if (cameras.has(ip)) {
+        $("message").textContent = "Esta câmara já está registada.";
+        return;
+      }
+
+      cameras.set(ip, {
+        ip,
+        name: "Câmara IP",
+        online: false
+      });
+
+      $("cameraIP").value = "";
+      $("message").textContent =
+        "IP adicionado. O estado só pode ser confirmado pelo serviço local.";
+      update();
+    });
+
+    $("scanButton").addEventListener("click", () => {
+      const start = $("startIP").value.trim();
+      const end = $("endIP").value.trim();
+
+      if (!validRange(start, end)) {
+        $("message").textContent =
+          "Intervalo inválido. Usa endereços entre 192.168.0.1 e 192.168.1.254.";
+        return;
+      }
+
+      $("message").textContent =
+        "Intervalo validado. Para descobrir câmaras reais, configura um serviço local autorizado.";
+    });
+
+    update();
+  </script>
+</body>
+</html>
+```
