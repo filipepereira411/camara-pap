@@ -1,394 +1,246 @@
-```html
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aplica Opal | Gestor de Câmaras IP</title>
-  <style>
-    :root {
-      --bg: #0b1020;
-      --panel: #141c2e;
-      --border: #26334a;
-      --text: #edf3ff;
-      --muted: #91a0b9;
-      --accent: #54e6b1;
-      --blue: #648cff;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplica Opal</title>
 
-    * { box-sizing: border-box; }
+    <script src="/socket.io/socket.io.js"></script>
 
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
+    <style>
+        body {
+            margin: 0;
+            padding: 24px;
+            background: #0b1220;
+            color: #edf3ff;
+            font-family: Arial, sans-serif;
+        }
 
-    header {
-      padding: 22px 6%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      background: #0e1526;
-    }
+        main {
+            max-width: 900px;
+            margin: auto;
+        }
 
-    .logo { font-size: 22px; font-weight: bold; }
-    .logo span { color: var(--accent); }
+        .panel {
+            background: #121c2e;
+            border: 1px solid #2a3952;
+            border-radius: 14px;
+            padding: 20px;
+            margin-top: 20px;
+        }
 
-    .badge {
-      color: var(--accent);
-      background: #16352f;
-      border-radius: 20px;
-      padding: 8px 12px;
-      font-size: 12px;
-    }
+        input, button {
+            padding: 12px;
+            margin: 5px 0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
 
-    main {
-      max-width: 1200px;
-      margin: auto;
-      padding: 32px 20px;
-    }
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            color: white;
+            background: #0b1424;
+            border: 1px solid #354761;
+        }
 
-    h1 { margin-bottom: 8px; }
-    .subtitle { color: var(--muted); margin-bottom: 28px; }
+        button {
+            border: 0;
+            background: #65a9ff;
+            color: #071326;
+            cursor: pointer;
+            font-weight: bold;
+        }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
-    }
+        #estado {
+            color: #aab8cf;
+            overflow-wrap: anywhere;
+        }
 
-    .card, .section {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 22px;
-    }
+        iframe {
+            width: 100%;
+            height: 500px;
+            border: 0;
+            border-radius: 10px;
+            background: #080e18;
+        }
 
-    .metric { color: var(--muted); font-size: 14px; }
-    .number { font-size: 32px; font-weight: bold; margin-top: 12px; }
-
-    .section { margin-bottom: 22px; }
-    .section h2 { font-size: 18px; margin-top: 0; }
-
-    .fields {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 14px;
-    }
-
-    label {
-      display: block;
-      color: var(--muted);
-      font-size: 13px;
-      margin-bottom: 8px;
-    }
-
-    input, select {
-      width: 100%;
-      background: #0b1222;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
-      color: white;
-      font-size: 14px;
-    }
-
-    button {
-      cursor: pointer;
-      border: 0;
-      border-radius: 8px;
-      padding: 12px 16px;
-      font-weight: bold;
-      margin: 8px 8px 0 0;
-    }
-
-    .primary { background: var(--accent); color: #071a14; }
-    .secondary { background: #263754; color: white; }
-    button:disabled { opacity: .5; cursor: not-allowed; }
-
-    .notice {
-      padding: 14px;
-      border-radius: 8px;
-      background: #252b3b;
-      color: #dce5f6;
-      line-height: 1.6;
-      font-size: 14px;
-      margin-top: 16px;
-    }
-
-    .table-wrap { overflow-x: auto; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 600px;
-    }
-
-    th, td {
-      padding: 14px 10px;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-      font-size: 14px;
-    }
-
-    th { color: var(--muted); font-weight: normal; }
-
-    .status {
-      color: #ffc56d;
-      background: #382d1d;
-      border-radius: 20px;
-      padding: 5px 9px;
-      font-size: 12px;
-    }
-
-    .empty {
-      text-align: center;
-      color: var(--muted);
-      padding: 28px;
-    }
-
-    #message {
-      color: var(--accent);
-      margin-top: 14px;
-      font-size: 14px;
-    }
-
-    footer {
-      text-align: center;
-      color: var(--muted);
-      padding: 25px;
-      border-top: 1px solid var(--border);
-      font-size: 12px;
-    }
-  </style>
+        .nota {
+            color: #aab8cf;
+            font-size: 14px;
+        }
+    </style>
 </head>
+
 <body>
-  <header>
-    <div class="logo">APLICA <span>OPAL</span></div>
-    <div class="badge">PAINEL DE CÂMARAS</div>
-  </header>
+<main>
+    <h1>Aplica Opal</h1>
+    <p>Ligação ao servidor e acesso à câmara IP.</p>
 
-  <main>
-    <h1>Gestor de Câmaras IP</h1>
-    <p class="subtitle">
-      Descoberta e gestão de câmaras na tua rede local.
-    </p>
-
-    <div class="grid">
-      <div class="card">
-        <div class="metric">Câmaras registadas</div>
-        <div class="number" id="total">0</div>
-      </div>
-      <div class="card">
-        <div class="metric">Online confirmadas</div>
-        <div class="number" id="online">0</div>
-      </div>
-      <div class="card">
-        <div class="metric">Intervalo configurado</div>
-        <div class="number" style="font-size:19px">192.168.x.x</div>
-      </div>
-    </div>
-
-    <section class="section">
-      <h2>Configuração da rede</h2>
-
-      <div class="fields">
-        <div>
-          <label for="startIP">IP inicial</label>
-          <input id="startIP" value="192.168.0.1"
-                 placeholder="192.168.0.1">
-        </div>
-        <div>
-          <label for="endIP">IP final</label>
-          <input id="endIP" value="192.168.1.254"
-                 placeholder="192.168.1.254">
-        </div>
-        <div>
-          <label for="cameraIP">IP de uma câmara conhecida</label>
-          <input id="cameraIP" placeholder="192.168.1.100">
-        </div>
-      </div>
-
-      <button class="primary" id="addButton">Adicionar câmara</button>
-      <button class="secondary" id="scanButton">Preparar descoberta</button>
-
-      <div class="notice">
-        <strong>Limitação do navegador:</strong>
-        esta página não consegue fazer uma varredura real da rede nem
-        confirmar se um IP está online. Para isso, liga-a a um serviço
-        local autorizado que descubra câmaras e comunique através de
-        protocolos compatíveis, como ONVIF.
-      </div>
-
-      <div id="message" role="status" aria-live="polite"></div>
+    <section class="panel">
+        <h2>Estado do servidor</h2>
+        <p id="estado">A estabelecer ligação...</p>
     </section>
 
-    <section class="section">
-      <h2>Câmaras registadas</h2>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Endereço IP</th>
-              <th>Dispositivo</th>
-              <th>Estado</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="cameraList">
-            <tr>
-              <td colspan="4" class="empty">
-                Ainda não existem câmaras registadas.
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <section class="panel">
+        <h2>Ligar à câmara IP</h2>
+
+        <label for="ip">Endereço IP ou hostname da câmara</label>
+        <input
+            id="ip"
+            type="text"
+            placeholder="Ex.: 192.168.1.50"
+            autocomplete="url"
+        >
+
+        <label for="porta">Porta web (opcional)</label>
+        <input
+            id="porta"
+            type="number"
+            min="1"
+            max="65535"
+            placeholder="Ex.: 80"
+        >
+
+        <button id="ligar">Abrir câmara</button>
+
+        <p id="estadoCamera" class="nota">
+            Introduz o endereço da tua câmara.
+        </p>
     </section>
-  </main>
 
-  <footer>
-    Aplica Opal · Gestão de dispositivos autorizados
-  </footer>
+    <section class="panel">
+        <h2>Interface da câmara</h2>
+        <div id="visualizacao">
+            <p class="nota">
+                A interface da câmara aparecerá aqui se permitir
+                a incorporação no navegador.
+            </p>
+        </div>
+    </section>
 
-  <script>
-    const cameras = new Map();
+    <section class="panel">
+        <h2>Comunicação com o servidor</h2>
+        <button id="ping">Testar ligação</button>
+        <p id="resultadoPing" class="nota"></p>
+    </section>
+</main>
 
-    const $ = id => document.getElementById(id);
+<script>
+    const estado = document.getElementById("estado");
+    const estadoCamera = document.getElementById("estadoCamera");
+    const visualizacao = document.getElementById("visualizacao");
+    const resultadoPing = document.getElementById("resultadoPing");
 
-    function ipToNumber(ip) {
-      const parts = ip.trim().split(".");
-      if (parts.length !== 4) return null;
+    // Liga ao Socket.IO servido pelo próprio servidor Node.js.
+    const socket = io();
 
-      let result = 0;
+    socket.on("connect", () => {
+        estado.textContent = "Ligado ao servidor. ID: " + socket.id;
+    });
 
-      for (const part of parts) {
-        if (!/^\d{1,3}$/.test(part)) return null;
+    socket.on("disconnect", () => {
+        estado.textContent = "Ligação ao servidor perdida.";
+    });
 
-        const n = Number(part);
-        if (n < 0 || n > 255) return null;
+    socket.on("connect_error", () => {
+        estado.textContent = "Não foi possível ligar ao servidor.";
+    });
 
-        result = result * 256 + n;
-      }
+    // Abre a interface web da câmara indicada pelo utilizador.
+    document.getElementById("ligar").addEventListener("click", () => {
+        let host = document.getElementById("ip").value.trim();
+        const porta = document.getElementById("porta").value.trim();
 
-      return result;
-    }
+        if (!host) {
+            estadoCamera.textContent =
+                "Introduz o endereço da câmara.";
+            return;
+        }
 
-    function validRange(start, end) {
-      const a = ipToNumber(start);
-      const b = ipToNumber(end);
+        // Aceita um endereço IP/hostname ou URL HTTP(S).
+        let url;
 
-      if (a === null || b === null || a > b) return false;
+        try {
+            if (/^https?:\/\//i.test(host)) {
+                url = new URL(host);
+            } else {
+                if (/[\/\s]/.test(host)) {
+                    throw new Error("Endereço inválido.");
+                }
 
-      // Limitar a ferramenta ao intervalo privado indicado.
-      const min = ipToNumber("192.168.0.1");
-      const max = ipToNumber("192.168.1.254");
+                url = new URL("http://" + host);
+            }
 
-      return a >= min && b <= max && b - a <= 510;
-    }
+            if (url.protocol !== "http:" &&
+                url.protocol !== "https:") {
+                throw new Error("Usa um endereço HTTP ou HTTPS.");
+            }
 
-    function update() {
-      const list = $("cameraList");
-      $("total").textContent = cameras.size;
-      $("online").textContent = [...cameras.values()]
-        .filter(camera => camera.online === true).length;
+            if (porta) {
+                const n = Number(porta);
 
-      list.replaceChildren();
+                if (!Number.isInteger(n) || n < 1 || n > 65535) {
+                    throw new Error("Porta inválida.");
+                }
 
-      if (cameras.size === 0) {
-        const row = list.insertRow();
-        const cell = row.insertCell();
-        cell.colSpan = 4;
-        cell.className = "empty";
-        cell.textContent = "Ainda não existem câmaras registadas.";
-        return;
-      }
+                url.port = String(n);
+            }
+        } catch (error) {
+            estadoCamera.textContent =
+                error.message || "Endereço inválido.";
+            return;
+        }
 
-      for (const camera of cameras.values()) {
-        const row = list.insertRow();
+        visualizacao.replaceChildren();
 
-        const ipCell = row.insertCell();
-        ipCell.textContent = camera.ip;
+        const frame = document.createElement("iframe");
+        frame.title = "Interface web da câmara";
+        frame.referrerPolicy = "no-referrer";
+        frame.src = url.href;
 
-        const nameCell = row.insertCell();
-        nameCell.textContent = camera.name;
+        visualizacao.appendChild(frame);
 
-        const statusCell = row.insertCell();
-        const badge = document.createElement("span");
-        badge.className = "status";
-        badge.textContent = camera.online ? "Online" : "Não verificado";
-        statusCell.appendChild(badge);
+        estadoCamera.textContent =
+            "A tentar abrir " + url.href +
+            ". Se não aparecer, abre o endereço num novo separador.";
 
-        const actionsCell = row.insertCell();
-        const removeButton = document.createElement("button");
-        removeButton.className = "secondary";
-        removeButton.textContent = "Remover";
+        // Alternativa caso a câmara bloqueie a incorporação.
+        const link = document.createElement("a");
+        link.href = url.href;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "Abrir câmara num novo separador";
+        link.style.display = "inline-block";
+        link.style.marginTop = "12px";
+        link.style.color = "#65a9ff";
 
-        removeButton.addEventListener("click", () => {
-          cameras.delete(camera.ip);
-          update();
-          $("message").textContent = "Câmara removida da lista.";
+        visualizacao.appendChild(link);
+    });
+
+    // Testa a comunicação com o servidor.
+    document.getElementById("ping").addEventListener("click", () => {
+        if (!socket.connected) {
+            resultadoPing.textContent =
+                "O servidor não está ligado.";
+            return;
+        }
+
+        const inicio = performance.now();
+
+        socket.timeout(5000).emit("ping:latency", (error) => {
+            if (error) {
+                resultadoPing.textContent =
+                    "O servidor não respondeu ao teste.";
+                return;
+            }
+
+            const ms = Math.round(performance.now() - inicio);
+
+            resultadoPing.textContent =
+                "Servidor respondeu. Latência aproximada: " + ms + " ms.";
         });
-
-        actionsCell.appendChild(removeButton);
-      }
-    }
-
-    $("addButton").addEventListener("click", () => {
-      const ip = $("cameraIP").value.trim();
-
-      if (ipToNumber(ip) === null) {
-        $("message").textContent = "Introduz um endereço IP válido.";
-        return;
-      }
-
-      const min = ipToNumber("192.168.0.1");
-      const max = ipToNumber("192.168.1.254");
-      const value = ipToNumber(ip);
-
-      if (value < min || value > max) {
-        $("message").textContent =
-          "O IP deve estar entre 192.168.0.1 e 192.168.1.254.";
-        return;
-      }
-
-      if (cameras.has(ip)) {
-        $("message").textContent = "Esta câmara já está registada.";
-        return;
-      }
-
-      cameras.set(ip, {
-        ip,
-        name: "Câmara IP",
-        online: false
-      });
-
-      $("cameraIP").value = "";
-      $("message").textContent =
-        "IP adicionado. O estado só pode ser confirmado pelo serviço local.";
-      update();
     });
-
-    $("scanButton").addEventListener("click", () => {
-      const start = $("startIP").value.trim();
-      const end = $("endIP").value.trim();
-
-      if (!validRange(start, end)) {
-        $("message").textContent =
-          "Intervalo inválido. Usa endereços entre 192.168.0.1 e 192.168.1.254.";
-        return;
-      }
-
-      $("message").textContent =
-        "Intervalo validado. Para descobrir câmaras reais, configura um serviço local autorizado.";
-    });
-
-    update();
-  </script>
+</script>
 </body>
 </html>
-```
