@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>FilipeCams</title>
+<style>
+  :root{
+    --bg:#e8ebee; --surface:#ffffff; --ink:#15191e; --muted:#5d6670; --line:#cfd5db;
+    --lens:#1b2430; --lens-ink:#e9eef3; --rec:#d6283a; --ok:#1f7a4d; --focus:#2b6fd6;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#0f1319; --surface:#182029; --ink:#e9eef3; --muted:#98a3ae; --line:#2b3642; --lens:#0a0e13; --focus:#6aa3ff}
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0; min-height:100%}
+  body{
+    background:var(--bg); color:var(--ink); line-height:1.5;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+    display:flex; align-items:center; justify-content:center; padding:20px; min-height:100vh;
+  }
+  .hidden{display:none !important}
+
+  /* ===== Acesso / Administração ===== */
+  .shell{width:100%; max-width:880px; display:grid; grid-template-columns:1fr 1fr; background:var(--surface);
+    border:1px solid var(--line); border-radius:16px; overflow:hidden}
+  .shell.wide{max-width:1040px; grid-template-columns:1fr}
+  .viewfinder{background:var(--lens); color:var(--lens-ink); padding:36px 32px; position:relative;
+    display:flex; flex-direction:column; justify-content:space-between; min-height:420px}
+  .viewfinder::before,.viewfinder::after{content:""; position:absolute; width:26px; height:26px; border:2px solid rgba(233,238,243,.55)}
+  .viewfinder::before{top:18px; left:18px; border-right:0; border-bottom:0}
+  .viewfinder::after{bottom:18px; right:18px; border-left:0; border-top:0}
+  .brand{font-size:1.7rem; font-weight:700; letter-spacing:-.02em}
+  .rec{display:inline-flex; align-items:center; gap:8px; font-size:.9rem; opacity:.9}
+  .rec i{width:10px; height:10px; border-radius:50%; background:var(--rec); animation:blink 1.4s steps(2,jump-none) infinite}
+  @keyframes blink{50%{opacity:.15}}
+  @media (prefers-reduced-motion:reduce){.rec i{animation:none}}
+  .viewfinder p{margin:0; color:rgba(233,238,243,.72); max-width:28ch}
+  .panel,.area{padding:32px}
+  h1{font-size:1.35rem; margin:0 0 4px; letter-spacing:-.01em}
+  .sub{margin:0 0 20px; color:var(--muted); font-size:.95rem}
+  label{display:block; font-size:.88rem; font-weight:600; margin:14px 0 6px}
+  input[type=text],input[type=password],input[type=email],select{
+    width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:8px;
+    background:var(--bg); color:var(--ink); font:inherit}
+  input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--focus); outline-offset:2px}
+  .seg{display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--line); border-radius:8px; overflow:hidden; margin-bottom:6px}
+  .seg button{padding:10px; border:0; background:transparent; color:var(--muted); font:inherit; font-weight:600; cursor:pointer}
+  .seg button[aria-pressed="true"]{background:var(--lens); color:var(--lens-ink)}
+  .btn{margin-top:20px; width:100%; padding:12px; border:0; border-radius:8px; background:var(--rec); color:#fff; font:inherit; font-weight:700; cursor:pointer}
+  .btn:hover{filter:brightness(1.08)}
+  .btn.ghost{background:transparent; color:var(--ink); border:1px solid var(--line)}
+  .btn.danger{background:transparent; color:var(--rec); border:1px solid var(--rec)}
+  .btn.small{width:auto; margin:0; padding:7px 12px; font-size:.85rem}
+  .links{display:flex; justify-content:space-between; gap:12px; margin-top:16px; font-size:.9rem}
+  .links a{color:var(--focus); cursor:pointer; text-decoration:underline}
+  .msg{margin-top:14px; padding:10px 12px; border-radius:8px; font-size:.9rem; display:none}
+  .msg.err{display:block; background:rgba(214,40,58,.12); color:var(--rec); border:1px solid rgba(214,40,58,.4)}
+  .msg.ok{display:block; background:rgba(31,122,77,.12); color:var(--ok); border:1px solid rgba(31,122,77,.4)}
+  .hint{font-size:.82rem; color:var(--muted); margin-top:10px}
+  .topbar{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:22px}
+  .who{display:flex; align-items:center; gap:10px}
+  .tag{font-size:.78rem; font-weight:700; padding:3px 9px; border-radius:99px; background:var(--rec); color:#fff}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px}
+  .box{border:1px solid var(--line); border-radius:10px; padding:18px}
+  .box h2{font-size:1.02rem; margin:0 0 6px}
+  .stat{font-size:2rem; font-weight:700; letter-spacing:-.02em}
+  h3{margin:28px 0 0; font-size:1.05rem}
+  .row{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  .row select{width:auto; min-width:200px}
+  .tablewrap{overflow-x:auto; margin-top:12px}
+  table{width:100%; border-collapse:collapse; font-size:.92rem}
+  th,td{padding:10px 8px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap}
+  th{color:var(--muted); font-weight:600}
+  .acts{display:flex; gap:8px}
+  .mgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-top:12px}
+  .mitem{position:relative; aspect-ratio:1; border-radius:8px; overflow:hidden; background:#111; cursor:pointer; border:1px solid var(--line)}
+  .mitem img,.mitem video{width:100%; height:100%; object-fit:cover; display:block}
+  .mitem .cap{position:absolute; left:0; right:0; bottom:0; padding:14px 8px 6px; font-size:.75rem; color:#fff;
+    background:linear-gradient(transparent,rgba(0,0,0,.75))}
+  .mitem .vi{position:absolute; top:6px; left:6px; background:rgba(0,0,0,.7); color:#fff; padding:2px 6px; border-radius:4px; font-size:.7rem}
+  .empty{color:var(--muted); padding:22px 0; font-size:.92rem}
+  @media (max-width:720px){
+    .shell{grid-template-columns:1fr}
+    .viewfinder{min-height:150px; padding:26px 24px}
+    .viewfinder p{display:none}
+    .panel,.area{padding:24px 20px}
+  }
+
+  /* ===== Câmara (cliente) ===== */
+  #camApp{position:fixed; inset:0; background:#000; z-index:50; display:flex; flex-direction:column; justify-content:space-between;
+    color:#fff; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px)}
+  .viewer-container{position:relative; flex:1; width:100%; min-height:0; background:#000; display:flex; align-items:center; justify-content:center; overflow:hidden}
+  #cameraView{width:100%; height:100%; object-fit:cover}
+  #cameraView.mirror{transform:scaleX(-1)}
+  .flash-effect{position:absolute; inset:0; background:#fff; opacity:0; z-index:5; pointer-events:none}
+  .flash-effect.active{animation:flashAnim .3s ease-out}
+  @keyframes flashAnim{0%{opacity:1}100%{opacity:0}}
+  .recording-badge{position:absolute; top:16px; left:16px; background:rgba(255,0,0,.8); color:#fff; padding:6px 12px; border-radius:20px; font-size:14px; font-weight:bold; display:none; align-items:center; gap:6px; z-index:6}
+  .cam-top{position:absolute; top:12px; right:12px; z-index:7; display:flex; gap:8px; align-items:center}
+  .pill{background:rgba(0,0,0,.55); color:#fff; border:1px solid rgba(255,255,255,.35); border-radius:99px; padding:7px 14px; font:inherit; font-size:13px; font-weight:600; cursor:pointer}
+  .mode-selector{height:40px; background:#000; display:flex; justify-content:center; align-items:center; gap:30px}
+  .mode-btn{background:none; border:none; color:#888; font-weight:bold; font-size:14px; cursor:pointer; letter-spacing:1px}
+  .mode-btn.active{color:#ffcc00}
+  .bottom-bar{height:120px; background:rgba(0,0,0,.95); display:flex; align-items:center; justify-content:space-around; padding:0 20px; border-top:1px solid #1a1a1a}
+  .shutter-btn{width:70px; height:70px; border-radius:50%; background:#fff; border:5px solid #000; box-shadow:0 0 0 4px #fff; cursor:pointer; transition:all .2s}
+  .shutter-btn:active{transform:scale(.9)}
+  .shutter-btn.video-mode{background:#ff3b30}
+  .shutter-btn.recording{background:#ff3b30; border-radius:20%; width:55px; height:55px}
+  .flip-btn{width:45px; height:45px; border-radius:50%; background:#222; border:none; color:#fff; font-size:20px; display:flex; align-items:center; justify-content:center; cursor:pointer}
+  .gallery-preview{width:45px; height:45px; border-radius:8px; background:#222 center/cover no-repeat; border:2px solid #fff; cursor:pointer; position:relative; display:flex; align-items:center; justify-content:center}
+  .folder-badge{position:absolute; bottom:-6px; right:-6px; background:#007aff; color:#fff; border-radius:50%; min-width:20px; height:20px; padding:0 4px; font-size:11px; display:flex; align-items:center; justify-content:center; font-weight:bold; border:1px solid #fff}
+  .init-overlay{position:absolute; inset:0; background:#000; z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px}
+  .init-btn{background:#fff; color:#000; border:none; padding:15px 40px; font-size:16px; font-weight:bold; border-radius:30px; cursor:pointer}
+  .gallery-modal{position:absolute; inset:0; background:#000; z-index:200; display:none; flex-direction:column}
+  .gallery-header{min-height:60px; padding:0 20px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #222}
+  .gallery-header h3{margin:0}
+  .close-gallery{background:none; border:none; color:#007aff; font-size:16px; font-weight:bold; cursor:pointer}
+  .gallery-grid{flex:1; display:grid; grid-template-columns:repeat(3,1fr); gap:4px; padding:4px; overflow-y:auto; align-content:start}
+  .gallery-grid .mitem{border:0; border-radius:0}
+  .gallery-empty{grid-column:1/-1; text-align:center; color:#888; padding:40px 20px}
+  .modal{position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:300; display:flex; align-items:center; justify-content:center; padding:20px}
+  .modal .card{background:var(--surface); color:var(--ink); border-radius:12px; padding:24px; width:100%; max-width:380px}
+  .modal h2{margin:0 0 4px; font-size:1.15rem}
+
+  /* ===== Visualizador ===== */
+  .lb{position:fixed; inset:0; z-index:400; background:rgba(0,0,0,.96); display:flex; flex-direction:column; color:#fff}
+  .lb-stage{flex:1; min-height:0; display:flex; align-items:center; justify-content:center; padding:12px}
+  .lb-stage img,.lb-stage video{max-width:100%; max-height:100%}
+  .lb-bar{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:14px 18px; flex-wrap:wrap; background:#0b0b0b}
+  .lb-bar .btn{margin:0}
+</style>
+</head>
+<body>
+
+<!-- ============ ACESSO ============ -->
+<main class="shell" id="authShell">
+  <section class="viewfinder" aria-hidden="true">
+    <span class="rec"><i></i> Acesso seguro</span>
+    <div>
+      <div class="brand">FilipeCams</div>
+      <p>Entra para tirares fotos, gravares vídeos e guardares tudo na tua pasta.</p>
+    </div>
+  </section>
+  <section class="panel">
+    <form id="vLogin" novalidate>
+      <h1>Entrar</h1>
+      <p class="sub">Escolhe o tipo de conta.</p>
+      <div class="seg" role="group" aria-label="Tipo de conta">
+        <button type="button" id="roleClient" aria-pressed="true">Cliente</button>
+        <button type="button" id="roleAdmin" aria-pressed="false">Administração</button>
+      </div>
+      <label for="lUser">Utilizador ou email</label>
+      <input type="text" id="lUser" autocomplete="username">
+      <label for="lPass">Palavra-passe</label>
+      <input type="password" id="lPass" autocomplete="current-password">
+      <button class="btn" type="submit">Entrar</button>
+      <div class="msg" id="lMsg" role="alert"></div>
+      <div class="links">
+        <a id="goForgot" tabindex="0" role="button">Esqueci-me da palavra-passe</a>
+        <a id="goRegister" tabindex="0" role="button">Criar conta</a>
+      </div>
+      <p class="hint hidden" id="adminHint">Conta de administração predefinida: admin / admin.</p>
+    </form>
+
+    <form id="vRegister" class="hidden" novalidate>
+      <h1>Criar conta de cliente</h1>
+      <p class="sub">Demora menos de um minuto.</p>
+      <label for="rUser">Utilizador</label>
+      <input type="text" id="rUser" autocomplete="username">
+      <label for="rEmail">Email</label>
+      <input type="email" id="rEmail" autocomplete="email">
+      <label for="rPass">Palavra-passe (mín. 4 caracteres)</label>
+      <input type="password" id="rPass" autocomplete="new-password">
+      <button class="btn" type="submit">Criar conta</button>
+      <div class="msg" id="rMsg" role="alert"></div>
+      <div class="links"><a data-back tabindex="0" role="button">Voltar a entrar</a></div>
+    </form>
+
+    <form id="vForgot1" class="hidden" novalidate>
+      <h1>Recuperar palavra-passe</h1>
+      <p class="sub">Indica o teu utilizador ou email para receberes um código.</p>
+      <label for="fUser">Utilizador ou email</label>
+      <input type="text" id="fUser">
+      <button class="btn" type="submit">Pedir código</button>
+      <div class="msg" id="f1Msg" role="alert"></div>
+      <div class="links"><a data-back tabindex="0" role="button">Voltar a entrar</a></div>
+    </form>
+
+    <form id="vForgot2" class="hidden" novalidate>
+      <h1>Definir nova palavra-passe</h1>
+      <p class="sub">Introduz o código e a nova palavra-passe.</p>
+      <div class="msg ok" id="codeBox" style="display:block"></div>
+      <label for="fCode">Código de 6 dígitos</label>
+      <input type="text" id="fCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+      <label for="fNew">Nova palavra-passe</label>
+      <input type="password" id="fNew" autocomplete="new-password">
+      <button class="btn" type="submit">Guardar nova palavra-passe</button>
+      <div class="msg" id="f2Msg" role="alert"></div>
+      <div class="links"><a data-back tabindex="0" role="button">Cancelar</a></div>
+    </form>
+  </section>
+</main>
+
+<!-- ============ ADMINISTRAÇÃO ============ -->
+<main class="shell wide hidden" id="adminShell">
+  <section class="area">
+    <div class="topbar">
+      <div class="who"><strong id="aName"></strong><span class="tag">Administração</span></div>
+      <button class="btn ghost small" data-logout>Terminar sessão</button>
+    </div>
+
+    <div class="grid">
+      <div class="box"><h2>Clientes</h2><div class="stat" id="aCount">0</div></div>
+      <div class="box"><h2>Fotos</h2><div class="stat" id="aPhotos">0</div></div>
+      <div class="box"><h2>Vídeos</h2><div class="stat" id="aVideos">0</div></div>
+      <div class="box">
+        <h2>A minha palavra-passe</h2>
+        <form id="aPassForm" novalidate>
+          <label for="aOld">Atual</label>
+          <input type="password" id="aOld" autocomplete="current-password">
+          <label for="aNew">Nova</label>
+          <input type="password" id="aNew" autocomplete="new-password">
+          <button class="btn small" style="margin-top:14px" type="submit">Guardar</button>
+          <div class="msg" id="aMsg" role="alert"></div>
+        </form>
+      </div>
+    </div>
+
+    <h3>Utilizadores</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Utilizador</th><th>Email</th><th>Tipo</th><th>Ficheiros</th><th>Criado em</th><th>Ações</th></tr></thead>
+        <tbody id="aRows"></tbody>
+      </table>
+    </div>
+    <div class="msg" id="aListMsg" role="alert"></div>
+
+    <div class="row" style="margin-top:28px">
+      <h3 style="margin:0">Fotos e vídeos dos clientes</h3>
+      <select id="aFilter" aria-label="Filtrar por cliente"></select>
+    </div>
+    <div class="mgrid" id="aMedia"></div>
+  </section>
+</main>
+
+<!-- ============ CÂMARA (CLIENTE) ============ -->
+<div id="camApp" class="hidden">
+  <div id="initOverlay" class="init-overlay">
+    <h2>FilipeCams</h2>
+    <p style="color:#888; font-size:14px; text-align:center; padding:0 20px; margin:0">Clique abaixo para inicializar o hardware de vídeo e áudio do dispositivo.</p>
+    <button class="init-btn" id="startBtn">Abrir Câmara</button>
+    <button class="pill" id="initLogout">Terminar sessão</button>
+  </div>
+
+  <div class="viewer-container">
+    <div id="recBadge" class="recording-badge">🔴 <span id="recTime">00:00</span></div>
+    <div id="flash" class="flash-effect"></div>
+    <div class="cam-top">
+      <button class="pill" id="accBtn"></button>
+      <button class="pill" id="camLogout">Sair</button>
+    </div>
+    <video id="cameraView" autoplay playsinline muted class="mirror"></video>
+  </div>
+
+  <div class="mode-selector">
+    <button id="modeFoto" class="mode-btn active">FOTO</button>
+    <button id="modeVideo" class="mode-btn">VÍDEO</button>
+  </div>
+
+  <div class="bottom-bar">
+    <div id="preview" class="gallery-preview" role="button" aria-label="Abrir pasta de fotos">
+      <span id="folderIcon" style="font-size:18px">📁</span>
+      <div id="folderCount" class="folder-badge">0</div>
+    </div>
+    <button id="shutter" class="shutter-btn" aria-label="Tirar foto ou gravar"></button>
+    <button class="flip-btn" id="flipBtn" aria-label="Alternar câmara">🔄</button>
+  </div>
+
+  <div id="galleryModal" class="gallery-modal">
+    <div class="gallery-header">
+      <h3>Pasta: 📁 Fotos FilipeCams</h3>
+      <button class="close-gallery" id="closeGallery">Concluído</button>
+    </div>
+    <div id="galleryGrid" class="gallery-grid"></div>
+  </div>
+  <canvas id="captureCanvas" class="hidden"></canvas>
+</div>
+
+<!-- Conta do cliente -->
+<div class="modal hidden" id="accModal">
+  <div class="card">
+    <h2>A minha conta</h2>
+    <p class="sub" id="accInfo"></p>
+    <form id="cPassForm" novalidate>
+      <label for="cOld">Palavra-passe atual</label>
+      <input type="password" id="cOld" autocomplete="current-password">
+      <label for="cNew">Nova palavra-passe</label>
+      <input type="password" id="cNew" autocomplete="new-password">
+      <button class="btn" type="submit">Guardar</button>
+      <div class="msg" id="cMsg" role="alert"></div>
+    </form>
+    <button class="btn ghost" id="accClose">Fechar</button>
+  </div>
+</div>
+
+<!-- Visualizador -->
+<div class="lb hidden" id="lb">
+  <div class="lb-stage" id="lbStage"></div>
+  <div class="lb-bar">
+    <span id="lbInfo"></span>
+    <div class="acts">
+      <a class="btn ghost small" id="lbDown" style="color:#fff;border-color:#555;text-decoration:none">Descarregar</a>
+      <button class="btn danger small" id="lbDel">Eliminar</button>
+      <button class="btn small" id="lbClose">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id)};
+var USERS_KEY="filipecams_users", SESSION_KEY="filipecams_session";
+var memUsers=null, memSession=null, resetCodes={}, resetFor=null, currentRole="client";
+
+/* ================= utilizadores ================= */
+function readUsers(){try{var r=localStorage.getItem(USERS_KEY); if(r) return JSON.parse(r);}catch(e){} return memUsers}
+function saveUsers(l){memUsers=l; try{localStorage.setItem(USERS_KEY,JSON.stringify(l));}catch(e){}}
+function getSession(){try{var s=sessionStorage.getItem(SESSION_KEY); if(s) return s;}catch(e){} return memSession}
+function setSession(u){memSession=u; try{if(u) sessionStorage.setItem(SESSION_KEY,u); else sessionStorage.removeItem(SESSION_KEY);}catch(e){}}
+function findUser(q){
+  q=(q||"").trim().toLowerCase();
+  return (readUsers()||[]).filter(function(u){return u.username.toLowerCase()===q||u.email.toLowerCase()===q})[0];
+}
+function hash(t){
+  if(window.crypto&&crypto.subtle&&window.TextEncoder){
+    return crypto.subtle.digest("SHA-256",new TextEncoder().encode("filipecams:"+t)).then(function(b){
+      return Array.prototype.map.call(new Uint8Array(b),function(x){return("0"+x.toString(16)).slice(-2)}).join("");
+    });
+  }
+  var h=5381; for(var i=0;i<t.length;i++){h=((h<<5)+h+t.charCodeAt(i))|0}
+  return Promise.resolve("x"+h);
+}
+function msg(el,t,type){el.textContent=t; el.className="msg "+type}
+function clearMsg(el){el.textContent=""; el.className="msg"}
+function fmt(ts){return new Date(ts).toLocaleDateString("pt-PT")}
+function fmtFull(ts){return new Date(ts).toLocaleString("pt-PT")}
+function esc(s){var d=document.createElement("div"); d.textContent=s; return d.innerHTML}
+
+/* ================= ficheiros (IndexedDB) ================= */
+var memMedia=[], memId=1, dbPromise=null;
+function dbp(){
+  if(!dbPromise){
+    dbPromise=new Promise(function(res,rej){
+      if(!window.indexedDB) return rej();
+      var r=indexedDB.open("filipecams_media",1);
+      r.onupgradeneeded=function(){r.result.createObjectStore("media",{keyPath:"id",autoIncrement:true})};
+      r.onsuccess=function(){res(r.result)};
+      r.onerror=function(){rej(r.error)};
+    }).catch(function(){return null});
+  }
+  return dbPromise;
+}
+function addMedia(rec){
+  return dbp().then(function(db){
+    if(!db){rec.id=memId++; memMedia.push(rec); return;}
+    return new Promise(function(res,rej){
+      var tx=db.transaction("media","readwrite"); tx.objectStore("media").add(rec);
+      tx.oncomplete=res; tx.onerror=function(){rej(tx.error)};
+    });
+  });
+}
+function allMedia(){
+  return dbp().then(function(db){
+    if(!db) return memMedia.slice().sort(function(a,b){return b.created-a.created});
+    return new Promise(function(res){
+      var r=db.transaction("media").objectStore("media").getAll();
+      r.onsuccess=function(){res(r.result.sort(function(a,b){return b.created-a.created}))};
+      r.onerror=function(){res([])};
+    });
+  });
+}
+function delMedia(id){
+  return dbp().then(function(db){
+    if(!db){memMedia=memMedia.filter(function(m){return m.id!==id}); return;}
+    return new Promise(function(res){
+      var tx=db.transaction("media","readwrite"); tx.objectStore("media").delete(id); tx.oncomplete=res; tx.onerror=res;
+    });
+  });
+}
+function delOwner(owner){
+  return allMedia().then(function(list){
+    return Promise.all(list.filter(function(m){return m.owner===owner}).map(function(m){return delMedia(m.id)}));
+  });
+}
+
+/* ================= navegação ================= */
+var shells=["authShell","adminShell"];
+var views=["vLogin","vRegister","vForgot1","vForgot2"];
+function showView(id){
+  views.forEach(function(v){$(v).classList.toggle("hidden",v!==id)});
+  ["lMsg","rMsg","f1Msg","f2Msg"].forEach(function(m){clearMsg($(m))});
+}
+function route(){
+  var name=getSession(), u=name&&findUser(name);
+  stopStream(); closeViewer();
+  $("camApp").classList.add("hidden"); $("accModal").classList.add("hidden");
+  shells.forEach(function(s){$(s).classList.add("hidden")});
+  document.body.style.display="flex";
+  if(!u){setSession(null); $("authShell").classList.remove("hidden"); showView("vLogin"); return;}
+  if(u.role==="admin"){$("adminShell").classList.remove("hidden"); renderAdmin(u);}
+  else{enterCamera(u);}
+  window.scrollTo(0,0);
+}
+function logout(){setSession(null); $("vLogin").reset(); setRole("client"); route();}
+
+/* ================= login / registo / recuperação ================= */
+function setRole(r){
+  currentRole=r;
+  $("roleClient").setAttribute("aria-pressed",r==="client");
+  $("roleAdmin").setAttribute("aria-pressed",r==="admin");
+  $("adminHint").classList.toggle("hidden",r!=="admin");
+  $("goRegister").classList.toggle("hidden",r==="admin");
+  if(r==="admin"){$("lUser").value="admin"; $("lPass").focus();}
+  else if($("lUser").value==="admin"){$("lUser").value="";}
+}
+$("roleClient").onclick=function(){setRole("client")};
+$("roleAdmin").onclick=function(){setRole("admin")};
+
+$("vLogin").addEventListener("submit",function(e){
+  e.preventDefault();
+  var u=findUser($("lUser").value), pass=$("lPass").value, bad="Utilizador ou palavra-passe incorretos.";
+  if(!u||!pass){msg($("lMsg"),bad,"err"); return;}
+  hash(pass).then(function(h){
+    if(h!==u.hash){msg($("lMsg"),bad,"err"); return;}
+    if(currentRole==="admin"&&u.role!=="admin"){msg($("lMsg"),"Esta conta não tem acesso à administração.","err"); return;}
+    if(currentRole==="client"&&u.role==="admin"){msg($("lMsg"),"Esta é uma conta de administração. Escolhe «Administração».","err"); return;}
+    setSession(u.username); $("lPass").value=""; route();
+  });
+});
+
+$("vRegister").addEventListener("submit",function(e){
+  e.preventDefault();
+  var user=$("rUser").value.trim(), email=$("rEmail").value.trim(), pass=$("rPass").value, m=$("rMsg");
+  if(!/^[A-Za-z0-9_.-]{3,20}$/.test(user)){msg(m,"O utilizador deve ter 3 a 20 caracteres (letras, números, _ . -).","err"); return;}
+  if(!/^\S+@\S+\.\S+$/.test(email)){msg(m,"Indica um email válido.","err"); return;}
+  if(pass.length<4){msg(m,"A palavra-passe deve ter pelo menos 4 caracteres.","err"); return;}
+  if(findUser(user)||findUser(email)){msg(m,"Esse utilizador ou email já existe.","err"); return;}
+  hash(pass).then(function(h){
+    var l=readUsers()||[]; l.push({username:user,email:email,hash:h,role:"client",created:Date.now()}); saveUsers(l);
+    $("vRegister").reset(); showView("vLogin"); setRole("client");
+    msg($("lMsg"),"Conta criada. Já podes entrar.","ok");
+  });
+});
+
+$("vForgot1").addEventListener("submit",function(e){
+  e.preventDefault();
+  var u=findUser($("fUser").value);
+  if(!u){msg($("f1Msg"),"Não encontrámos nenhuma conta com esses dados.","err"); return;}
+  var code=String(Math.floor(100000+Math.random()*900000));
+  resetCodes[u.username]={code:code,exp:Date.now()+600000}; resetFor=u.username;
+  $("codeBox").textContent="Código para "+u.username+": "+code+" (válido 10 minutos). Modo demonstração: sem servidor de email, o código aparece aqui.";
+  showView("vForgot2"); $("fCode").focus();
+});
+$("vForgot2").addEventListener("submit",function(e){
+  e.preventDefault();
+  var m=$("f2Msg"), r=resetCodes[resetFor], np=$("fNew").value;
+  if(!r||Date.now()>r.exp){msg(m,"O código expirou. Pede um novo.","err"); return;}
+  if($("fCode").value.trim()!==r.code){msg(m,"Código incorreto.","err"); return;}
+  if(np.length<4){msg(m,"A palavra-passe deve ter pelo menos 4 caracteres.","err"); return;}
+  hash(np).then(function(h){
+    var l=readUsers()||[]; l.forEach(function(u){if(u.username===resetFor)u.hash=h}); saveUsers(l);
+    delete resetCodes[resetFor]; $("vForgot1").reset(); $("vForgot2").reset(); showView("vLogin");
+    msg($("lMsg"),"Palavra-passe atualizada. Já podes entrar.","ok");
+  });
+});
+$("goForgot").onclick=function(){showView("vForgot1"); $("fUser").focus()};
+$("goRegister").onclick=function(){showView("vRegister"); $("rUser").focus()};
+Array.prototype.forEach.call(document.querySelectorAll("[data-back]"),function(a){a.onclick=function(){showView("vLogin")}});
+Array.prototype.forEach.call(document.querySelectorAll(".links a"),function(a){
+  a.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault(); a.click();}});
+});
+Array.prototype.forEach.call(document.querySelectorAll("[data-logout]"),function(b){b.onclick=logout});
+$("camLogout").onclick=logout; $("initLogout").onclick=logout;
+
+function changePass(formId,oldId,newId,msgId,username){
+  var m=$(msgId), np=$(newId).value, u=findUser(username);
+  if(np.length<4){msg(m,"A nova palavra-passe deve ter pelo menos 4 caracteres.","err"); return;}
+  hash($(oldId).value).then(function(h){
+    if(h!==u.hash){msg(m,"A palavra-passe atual está incorreta.","err"); return;}
+    return hash(np).then(function(nh){
+      var l=readUsers()||[]; l.forEach(function(x){if(x.username===username)x.hash=nh}); saveUsers(l);
+      $(formId).reset(); msg(m,"Palavra-passe alterada.","ok");
+    });
+  });
+}
+$("cPassForm").addEventListener("submit",function(e){e.preventDefault(); changePass("cPassForm","cOld","cNew","cMsg",getSession())});
+$("aPassForm").addEventListener("submit",function(e){e.preventDefault(); changePass("aPassForm","aOld","aNew","aMsg",getSession())});
+$("accBtn").onclick=function(){
+  var u=findUser(getSession()); if(!u) return;
+  $("accInfo").textContent=u.username+" · "+u.email+" · conta criada em "+fmt(u.created);
+  clearMsg($("cMsg")); $("accModal").classList.remove("hidden");
+};
+$("accClose").onclick=function(){$("accModal").classList.add("hidden")};
+
+/* ================= visualizador ================= */
+var lbUrl=null, lbItem=null, lbAfter=null;
+function openViewer(item,onDelete){
+  closeViewer();
+  lbItem=item; lbAfter=onDelete;
+  lbUrl=URL.createObjectURL(item.blob);
+  var el;
+  if(item.type==="video"){el=document.createElement("video"); el.controls=true; el.autoplay=true; el.playsInline=true;}
+  else{el=document.createElement("img"); el.alt="Foto de "+item.owner;}
+  el.src=lbUrl; $("lbStage").appendChild(el);
+  $("lbInfo").textContent=item.owner+" · "+fmtFull(item.created);
+  var d=$("lbDown"); d.href=lbUrl;
+  d.download="filipecams_"+item.owner+"_"+item.created+(item.type==="video"?(item.mime&&item.mime.indexOf("mp4")>-1?".mp4":".webm"):".jpg");
+  $("lb").classList.remove("hidden");
+}
+function closeViewer(){
+  $("lb").classList.add("hidden"); $("lbStage").innerHTML="";
+  if(lbUrl){URL.revokeObjectURL(lbUrl); lbUrl=null}
+  lbItem=null;
+}
+$("lbClose").onclick=closeViewer;
+$("lbDel").onclick=function(){
+  if(!lbItem||!confirm("Eliminar este ficheiro?")) return;
+  var id=lbItem.id, cb=lbAfter;
+  closeViewer(); delMedia(id).then(function(){if(cb)cb()});
+};
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("lb").classList.contains("hidden")) closeViewer()});
+
+/* miniaturas */
+var thumbUrls=[];
+function freeThumbs(){thumbUrls.forEach(function(u){URL.revokeObjectURL(u)}); thumbUrls=[]}
+function makeThumb(m,showOwner){
+  var d=document.createElement("div"); d.className="mitem"; d.tabIndex=0;
+  var u=URL.createObjectURL(m.blob); thumbUrls.push(u);
+  var media;
+  if(m.type==="video"){media=document.createElement("video"); media.muted=true; media.preload="metadata"; media.src=u+"#t=0.1";
+    var v=document.createElement("span"); v.className="vi"; v.textContent="🎥 Vídeo"; d.appendChild(media); d.appendChild(v);}
+  else{media=document.createElement("img"); media.src=u; media.alt=""; d.appendChild(media);}
+  if(showOwner){var c=document.createElement("div"); c.className="cap"; c.textContent=m.owner+" · "+fmt(m.created); d.appendChild(c);}
+  d.addEventListener("keydown",function(e){if(e.key==="Enter"){d.click()}});
+  return d;
+}
+
+/* ================= câmara ================= */
+var currentUser=null, currentStream=null, useFront=true, currentMode="foto";
+var recorder=null, chunks=[], isRecording=false, recTimer=null, recSeconds=0, previewUrl=null;
+var video=$("cameraView"), shutter=$("shutter");
+
+function enterCamera(u){
+  currentUser=u.username;
+  $("accBtn").textContent=u.username;
+  $("camApp").classList.remove("hidden");
+  $("initOverlay").style.display="flex";
+  $("galleryModal").style.display="none";
+  document.body.style.display="block";
+  changeMode("foto"); refreshPreview();
+}
+function stopStream(){
+  if(isRecording&&recorder){try{recorder.onstop=null; recorder.stop();}catch(e){} finishRecordingUi();}
+  if(currentStream){currentStream.getTracks().forEach(function(t){t.stop()}); currentStream=null;}
+  video.srcObject=null;
+}
+async function initCamera(){
+  if(currentStream) currentStream.getTracks().forEach(function(t){t.stop()});
+  try{
+    currentStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:useFront?"user":"environment"},audio:true});
+    video.srcObject=currentStream; video.muted=true;
+    video.classList.toggle("mirror",useFront);
+  }catch(err){
+    console.error("Erro de hardware:",err);
+    alert("Não foi possível aceder à câmara/microfone. Certifica-te de que deste todas as permissões (e que a página está em https).");
+  }
+}
+$("startBtn").onclick=async function(){$("initOverlay").style.display="none"; await initCamera();};
+$("flipBtn").onclick=async function(){if(isRecording) return; useFront=!useFront; await initCamera();};
+
+function changeMode(mode){
+  if(isRecording) return;
+  currentMode=mode;
+  $("modeFoto").classList.toggle("active",mode==="foto");
+  $("modeVideo").classList.toggle("active",mode==="video");
+  shutter.classList.toggle("video-mode",mode==="video");
+}
+$("modeFoto").onclick=function(){changeMode("foto")};
+$("modeVideo").onclick=function(){changeMode("video")};
+
+shutter.onclick=function(){
+  if(!currentStream){alert("Abre primeiro a câmara."); return;}
+  if(currentMode==="foto") capturePhoto();
+  else if(!isRecording) startRecording();
+  else stopRecording();
+};
+
+function capturePhoto(){
+  var w=video.videoWidth, h=video.videoHeight;
+  if(!w||!h) return;
+  var c=$("captureCanvas"); c.width=w; c.height=h;
+  var ctx=c.getContext("2d");
+  if(useFront){ctx.translate(w,0); ctx.scale(-1,1);}
+  ctx.drawImage(video,0,0,w,h);
+  var f=$("flash"); f.classList.remove("active"); void f.offsetWidth; f.classList.add("active");
+  c.toBlob(function(blob){
+    if(!blob) return;
+    addMedia({owner:currentUser,type:"foto",blob:blob,mime:"image/jpeg",created:Date.now()}).then(refreshPreview);
+  },"image/jpeg",0.92);
+}
+
+function startRecording(){
+  if(!window.MediaRecorder){alert("Este browser não suporta gravação de vídeo."); return;}
+  var types=["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm","video/mp4"], mime="";
+  for(var i=0;i<types.length;i++){if(MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(types[i])){mime=types[i];break;}}
+  try{recorder=mime?new MediaRecorder(currentStream,{mimeType:mime}):new MediaRecorder(currentStream);}
+  catch(e){alert("Não foi possível iniciar a gravação."); return;}
+  chunks=[];
+  recorder.ondataavailable=function(e){if(e.data&&e.data.size) chunks.push(e.data)};
+  recorder.onstop=function(){
+    var type=recorder.mimeType||mime||"video/webm";
+    var blob=new Blob(chunks,{type:type}); chunks=[];
+    finishRecordingUi();
+    if(blob.size) addMedia({owner:currentUser,type:"video",blob:blob,mime:type,created:Date.now()}).then(refreshPreview);
+  };
+  recorder.start(1000);
+  isRecording=true; shutter.classList.add("recording");
+  recSeconds=0; $("recTime").textContent="00:00"; $("recBadge").style.display="flex";
+  recTimer=setInterval(function(){
+    recSeconds++;
+    $("recTime").textContent=("0"+Math.floor(recSeconds/60)).slice(-2)+":"+("0"+(recSeconds%60)).slice(-2);
+  },1000);
+}
+function stopRecording(){if(recorder&&recorder.state!=="inactive") recorder.stop();}
+function finishRecordingUi(){
+  isRecording=false; clearInterval(recTimer);
+  shutter.classList.remove("recording"); $("recBadge").style.display="none";
+}
+
+/* miniatura + galeria do cliente */
+function refreshPreview(){
+  return allMedia().then(function(list){
+    var mine=list.filter(function(m){return m.owner===currentUser});
+    $("folderCount").textContent=mine.length;
+    var p=$("preview");
+    if(previewUrl){URL.revokeObjectURL(previewUrl); previewUrl=null;}
+    var lastPhoto=mine.filter(function(m){return m.type==="foto"})[0];
+    if(lastPhoto){previewUrl=URL.createObjectURL(lastPhoto.blob); p.style.backgroundImage="url("+previewUrl+")"; $("folderIcon").style.display="none";}
+    else{p.style.backgroundImage="none"; $("folderIcon").style.display="";}
+    if($("galleryModal").style.display==="flex") renderGallery(mine);
+  });
+}
+function renderGallery(mine){
+  freeThumbs();
+  var g=$("galleryGrid"); g.innerHTML="";
+  if(!mine.length){g.innerHTML='<div class="gallery-empty">Ainda não tens fotos nem vídeos. Tira a primeira!</div>'; return;}
+  mine.forEach(function(m){
+    var t=makeThumb(m,false);
+    t.onclick=function(){openViewer(m,refreshPreview)};
+    g.appendChild(t);
+  });
+}
+$("preview").onclick=function(){
+  $("galleryModal").style.display="flex";
+  allMedia().then(function(l){renderGallery(l.filter(function(m){return m.owner===currentUser}))});
+};
+$("closeGallery").onclick=function(){$("galleryModal").style.display="none"; freeThumbs();};
+
+/* ================= administração ================= */
+function renderAdmin(admin){
+  $("aName").textContent=admin.username;
+  var users=readUsers()||[];
+  allMedia().then(function(media){
+    var counts={}, photos=0, videos=0;
+    media.forEach(function(m){counts[m.owner]=(counts[m.owner]||0)+1; if(m.type==="video")videos++; else photos++;});
+    $("aCount").textContent=users.filter(function(x){return x.role!=="admin"}).length;
+    $("aPhotos").textContent=photos; $("aVideos").textContent=videos;
+
+    $("aRows").innerHTML=users.map(function(x){
+      var acts=x.username===admin.username?"—":
+        '<div class="acts"><button class="btn ghost small" data-reset="'+esc(x.username)+'">Repor passe</button>'+
+        '<button class="btn danger small" data-del="'+esc(x.username)+'">Eliminar</button></div>';
+      return "<tr><td>"+esc(x.username)+"</td><td>"+esc(x.email)+"</td><td>"+(x.role==="admin"?"Administração":"Cliente")+
+        "</td><td>"+(counts[x.username]||0)+"</td><td>"+fmt(x.created)+"</td><td>"+acts+"</td></tr>";
+    }).join("");
+
+    var sel=$("aFilter"), keep=sel.value||"";
+    sel.innerHTML='<option value="">Todos os clientes</option>'+users.filter(function(x){return x.role!=="admin"}).map(function(x){
+      return '<option value="'+esc(x.username)+'">'+esc(x.username)+" ("+(counts[x.username]||0)+")</option>";
+    }).join("");
+    sel.value=keep;
+    if(sel.value!==keep) sel.value="";
+    renderAdminMedia(media);
+  });
+}
+function renderAdminMedia(media){
+  freeThumbs();
+  var f=$("aFilter").value, g=$("aMedia"); g.innerHTML="";
+  var list=media.filter(function(m){return !f||m.owner===f});
+  if(!list.length){g.innerHTML='<div class="empty">Ainda não há fotos nem vídeos'+(f?" deste cliente":"")+".</div>"; return;}
+  list.forEach(function(m){
+    var t=makeThumb(m,true);
+    t.onclick=function(){openViewer(m,function(){renderAdmin(findUser(getSession()))})};
+    g.appendChild(t);
+  });
+}
+$("aFilter").onchange=function(){allMedia().then(renderAdminMedia)};
+$("aRows").addEventListener("click",function(e){
+  var t=e.target, m=$("aListMsg"), list=readUsers()||[];
+  if(t.dataset.del){
+    if(!confirm("Eliminar a conta «"+t.dataset.del+"» e todas as suas fotos e vídeos?")) return;
+    var name=t.dataset.del;
+    saveUsers(list.filter(function(x){return x.username!==name}));
+    delOwner(name).then(function(){renderAdmin(findUser(getSession())); msg(m,"Conta e ficheiros eliminados.","ok");});
+  }else if(t.dataset.reset){
+    var tmp="passe"+Math.floor(1000+Math.random()*9000), name2=t.dataset.reset;
+    hash(tmp).then(function(h){
+      list.forEach(function(x){if(x.username===name2)x.hash=h}); saveUsers(list);
+      msg(m,"Nova palavra-passe temporária de "+name2+": "+tmp,"ok");
+    });
+  }
+});
+
+/* ================= arranque ================= */
+(function init(){
+  var users=readUsers()||[], p=Promise.resolve();
+  if(!users.some(function(u){return u.username==="admin"})){
+    p=hash("admin").then(function(h){
+      users.unshift({username:"admin",email:"admin@filipecams.local",hash:h,role:"admin",created:Date.now()});
+      saveUsers(users);
+    });
+  }
+  p.then(route);
+})();
+})();
+</script>
+</body>
+</html>
