@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FilipeCams – Acesso</title>
+<style>
+  :root{
+    --bg:#e8ebee; --surface:#ffffff; --ink:#15191e; --muted:#5d6670; --line:#cfd5db;
+    --lens:#1b2430; --lens-ink:#e9eef3; --rec:#d6283a; --ok:#1f7a4d; --focus:#2b6fd6;
+    --radius:10px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1319; --surface:#182029; --ink:#e9eef3; --muted:#98a3ae; --line:#2b3642;
+      --lens:#0a0e13; --lens-ink:#e9eef3; --focus:#6aa3ff;
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Avenir Next","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+    line-height:1.5; display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .shell{width:100%; max-width:880px; display:grid; grid-template-columns:1fr 1fr; background:var(--surface);
+    border:1px solid var(--line); border-radius:16px; overflow:hidden}
+  .shell.wide{max-width:980px; grid-template-columns:1fr}
+  .viewfinder{
+    background:var(--lens); color:var(--lens-ink); padding:36px 32px; position:relative;
+    display:flex; flex-direction:column; justify-content:space-between; min-height:420px;
+  }
+  .viewfinder::before,.viewfinder::after{content:""; position:absolute; width:26px; height:26px; border:2px solid rgba(233,238,243,.55)}
+  .viewfinder::before{top:18px; left:18px; border-right:0; border-bottom:0}
+  .viewfinder::after{bottom:18px; right:18px; border-left:0; border-top:0}
+  .brand{font-size:1.7rem; font-weight:700; letter-spacing:-.02em}
+  .rec{display:inline-flex; align-items:center; gap:8px; font-size:.9rem; color:var(--lens-ink); opacity:.9}
+  .rec i{width:10px; height:10px; border-radius:50%; background:var(--rec); animation:blink 1.4s steps(2,jump-none) infinite}
+  @keyframes blink{50%{opacity:.15}}
+  @media (prefers-reduced-motion:reduce){.rec i{animation:none}}
+  .viewfinder p{margin:0; color:rgba(233,238,243,.72); max-width:28ch}
+  .panel{padding:36px 32px}
+  h1{font-size:1.35rem; margin:0 0 4px; letter-spacing:-.01em}
+  .sub{margin:0 0 22px; color:var(--muted); font-size:.95rem}
+  label{display:block; font-size:.88rem; font-weight:600; margin:14px 0 6px}
+  input[type=text],input[type=password],input[type=email]{
+    width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:8px;
+    background:var(--bg); color:var(--ink); font:inherit;
+  }
+  input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--focus); outline-offset:2px}
+  .seg{display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--line); border-radius:8px; overflow:hidden; margin-bottom:6px}
+  .seg button{padding:10px; border:0; background:transparent; color:var(--muted); font:inherit; font-weight:600; cursor:pointer}
+  .seg button[aria-pressed="true"]{background:var(--lens); color:var(--lens-ink)}
+  .btn{margin-top:20px; width:100%; padding:12px; border:0; border-radius:8px; background:var(--rec); color:#fff;
+    font:inherit; font-weight:700; cursor:pointer}
+  .btn:hover{filter:brightness(1.08)}
+  .btn.ghost{background:transparent; color:var(--ink); border:1px solid var(--line)}
+  .btn.small{width:auto; margin:0; padding:7px 12px; font-size:.85rem}
+  .btn.danger{background:transparent; color:var(--rec); border:1px solid var(--rec)}
+  .links{display:flex; justify-content:space-between; gap:12px; margin-top:16px; font-size:.9rem}
+  .links a{color:var(--focus); cursor:pointer; text-decoration:underline}
+  .msg{margin-top:14px; padding:10px 12px; border-radius:8px; font-size:.9rem; display:none}
+  .msg.err{display:block; background:rgba(214,40,58,.12); color:var(--rec); border:1px solid rgba(214,40,58,.4)}
+  .msg.ok{display:block; background:rgba(31,122,77,.12); color:var(--ok); border:1px solid rgba(31,122,77,.4)}
+  .hint{font-size:.82rem; color:var(--muted); margin-top:10px}
+  .hidden{display:none !important}
+
+  /* Áreas autenticadas */
+  .area{padding:28px 32px}
+  .topbar{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:22px}
+  .topbar .who{display:flex; align-items:center; gap:10px}
+  .tag{font-size:.78rem; font-weight:700; padding:3px 9px; border-radius:99px; background:var(--lens); color:var(--lens-ink)}
+  .tag.admin{background:var(--rec)}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px}
+  .box{border:1px solid var(--line); border-radius:var(--radius); padding:18px}
+  .box h2{font-size:1.02rem; margin:0 0 6px}
+  .box p{margin:0; color:var(--muted); font-size:.92rem}
+  .stat{font-size:2rem; font-weight:700; letter-spacing:-.02em}
+  .tablewrap{overflow-x:auto; margin-top:12px}
+  table{width:100%; border-collapse:collapse; font-size:.92rem}
+  th,td{padding:10px 8px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap}
+  th{color:var(--muted); font-weight:600}
+  td .acts{display:flex; gap:8px}
+  h3{margin:26px 0 0; font-size:1.05rem}
+
+  @media (max-width:720px){
+    .shell{grid-template-columns:1fr}
+    .viewfinder{min-height:150px; padding:26px 24px}
+    .viewfinder p{display:none}
+    .panel,.area{padding:26px 22px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ ECRÃ DE ACESSO ============ -->
+<main class="shell" id="authShell">
+  <section class="viewfinder" aria-hidden="true">
+    <span class="rec"><i></i> Acesso seguro</span>
+    <div>
+      <div class="brand">FilipeCams</div>
+      <p>Entra para guardares as tuas fotos e vídeos na tua pasta.</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <!-- Login -->
+    <form id="vLogin" novalidate>
+      <h1>Entrar</h1>
+      <p class="sub">Escolhe o tipo de conta.</p>
+      <div class="seg" role="group" aria-label="Tipo de conta">
+        <button type="button" id="roleClient" aria-pressed="true">Cliente</button>
+        <button type="button" id="roleAdmin" aria-pressed="false">Administração</button>
+      </div>
+      <label for="lUser">Utilizador ou email</label>
+      <input type="text" id="lUser" autocomplete="username" required>
+      <label for="lPass">Palavra-passe</label>
+      <input type="password" id="lPass" autocomplete="current-password" required>
+      <button class="btn" type="submit">Entrar</button>
+      <div class="msg" id="lMsg" role="alert"></div>
+      <div class="links">
+        <a id="goForgot" tabindex="0" role="button">Esqueci-me da palavra-passe</a>
+        <a id="goRegister" tabindex="0" role="button">Criar conta</a>
+      </div>
+      <p class="hint hidden" id="adminHint">Conta de administração predefinida: admin / admin.</p>
+    </form>
+
+    <!-- Registo (cliente) -->
+    <form id="vRegister" class="hidden" novalidate>
+      <h1>Criar conta de cliente</h1>
+      <p class="sub">Demora menos de um minuto.</p>
+      <label for="rUser">Utilizador</label>
+      <input type="text" id="rUser" autocomplete="username" required>
+      <label for="rEmail">Email</label>
+      <input type="email" id="rEmail" autocomplete="email" required>
+      <label for="rPass">Palavra-passe (mín. 4 caracteres)</label>
+      <input type="password" id="rPass" autocomplete="new-password" required>
+      <button class="btn" type="submit">Criar conta</button>
+      <div class="msg" id="rMsg" role="alert"></div>
+      <div class="links"><a data-back tabindex="0" role="button">Voltar a entrar</a></div>
+    </form>
+
+    <!-- Esqueci a passe: passo 1 -->
+    <form id="vForgot1" class="hidden" novalidate>
+      <h1>Recuperar palavra-passe</h1>
+      <p class="sub">Indica o teu utilizador ou email para receberes um código.</p>
+      <label for="fUser">Utilizador ou email</label>
+      <input type="text" id="fUser" required>
+      <button class="btn" type="submit">Pedir código</button>
+      <div class="msg" id="f1Msg" role="alert"></div>
+      <div class="links"><a data-back tabindex="0" role="button">Voltar a entrar</a></div>
+    </form>
+
+    <!-- Esqueci a passe: passo 2 -->
+    <form id="vForgot2" class="hidden" novalidate>
+      <h1>Definir nova palavra-passe</h1>
+      <p class="sub">Introduz o código e a nova palavra-passe.</p>
+      <div class="msg ok" id="codeBox" style="display:block"></div>
+      <label for="fCode">Código de 6 dígitos</label>
+      <input type="text" id="fCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
+      <label for="fNew">Nova palavra-passe</label>
+      <input type="password" id="fNew" autocomplete="new-password" required>
+      <button class="btn" type="submit">Guardar nova palavra-passe</button>
+      <div class="msg" id="f2Msg" role="alert"></div>
+      <div class="links"><a data-back tabindex="0" role="button">Cancelar</a></div>
+    </form>
+  </section>
+</main>
+
+<!-- ============ ÁREA DO CLIENTE ============ -->
+<main class="shell wide hidden" id="clientShell">
+  <section class="area">
+    <div class="topbar">
+      <div class="who"><strong id="cName"></strong><span class="tag">Cliente</span></div>
+      <button class="btn ghost small" data-logout>Terminar sessão</button>
+    </div>
+    <div class="grid">
+      <div class="box">
+        <h2>A minha câmara</h2>
+        <p>Abre a câmara para tirar fotos e gravar vídeos.</p>
+        <p style="margin-top:12px"><a class="btn small" style="text-decoration:none;display:inline-block" href="index.html">Abrir câmara</a></p>
+      </div>
+      <div class="box">
+        <h2>Os meus dados</h2>
+        <p id="cInfo"></p>
+      </div>
+      <div class="box">
+        <h2>Alterar palavra-passe</h2>
+        <form id="cPassForm" novalidate>
+          <label for="cOld">Palavra-passe atual</label>
+          <input type="password" id="cOld" autocomplete="current-password">
+          <label for="cNew">Nova palavra-passe</label>
+          <input type="password" id="cNew" autocomplete="new-password">
+          <button class="btn small" style="margin-top:14px" type="submit">Guardar</button>
+          <div class="msg" id="cMsg" role="alert"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ============ ÁREA DE ADMINISTRAÇÃO ============ -->
+<main class="shell wide hidden" id="adminShell">
+  <section class="area">
+    <div class="topbar">
+      <div class="who"><strong id="aName"></strong><span class="tag admin">Administração</span></div>
+      <button class="btn ghost small" data-logout>Terminar sessão</button>
+    </div>
+
+    <div class="grid">
+      <div class="box"><h2>Clientes registados</h2><div class="stat" id="aCount">0</div></div>
+      <div class="box">
+        <h2>Alterar a minha palavra-passe</h2>
+        <form id="aPassForm" novalidate>
+          <label for="aOld">Palavra-passe atual</label>
+          <input type="password" id="aOld" autocomplete="current-password">
+          <label for="aNew">Nova palavra-passe</label>
+          <input type="password" id="aNew" autocomplete="new-password">
+          <button class="btn small" style="margin-top:14px" type="submit">Guardar</button>
+          <div class="msg" id="aMsg" role="alert"></div>
+        </form>
+      </div>
+    </div>
+
+    <h3>Utilizadores</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Utilizador</th><th>Email</th><th>Tipo</th><th>Criado em</th><th>Ações</th></tr></thead>
+        <tbody id="aRows"></tbody>
+      </table>
+    </div>
+    <div class="msg" id="aListMsg" role="alert"></div>
+  </section>
+</main>
+
+<script>
+(function(){
+  "use strict";
+  var USERS_KEY="filipecams_users", SESSION_KEY="filipecams_session";
+  var memUsers=null, memSession=null;   // plano B se o armazenamento do browser falhar
+  var resetCodes={};                    // utilizador -> {code, exp}
+  var currentRole="client";
+
+  var $=function(id){return document.getElementById(id)};
+  var views=["vLogin","vRegister","vForgot1","vForgot2"];
+  var shells=["authShell","clientShell","adminShell"];
+
+  /* ---------- armazenamento ---------- */
+  function readUsers(){
+    try{var raw=localStorage.getItem(USERS_KEY); if(raw) return JSON.parse(raw);}catch(e){}
+    return memUsers;
+  }
+  function saveUsers(list){
+    memUsers=list;
+    try{localStorage.setItem(USERS_KEY,JSON.stringify(list));}catch(e){}
+  }
+  function getSession(){
+    try{var s=sessionStorage.getItem(SESSION_KEY); if(s) return s;}catch(e){}
+    return memSession;
+  }
+  function setSession(u){
+    memSession=u;
+    try{ if(u) sessionStorage.setItem(SESSION_KEY,u); else sessionStorage.removeItem(SESSION_KEY);}catch(e){}
+  }
+
+  /* ---------- hash da palavra-passe ---------- */
+  function hash(text){
+    if(window.crypto && crypto.subtle && window.TextEncoder){
+      return crypto.subtle.digest("SHA-256",new TextEncoder().encode("filipecams:"+text)).then(function(buf){
+        return Array.prototype.map.call(new Uint8Array(buf),function(b){return ("0"+b.toString(16)).slice(-2)}).join("");
+      });
+    }
+    var h=5381; for(var i=0;i<text.length;i++){h=((h<<5)+h+text.charCodeAt(i))|0}
+    return Promise.resolve("x"+h);
+  }
+
+  /* ---------- inicialização: conta admin/admin ---------- */
+  function init(){
+    var users=readUsers();
+    if(!users) users=[];
+    var hasAdmin=users.some(function(u){return u.username==="admin"});
+    var p=Promise.resolve();
+    if(!hasAdmin){
+      p=hash("admin").then(function(h){
+        users.unshift({username:"admin",email:"admin@filipecams.local",hash:h,role:"admin",created:Date.now()});
+        saveUsers(users);
+      });
+    }
+    p.then(route);
+  }
+
+  /* ---------- navegação ---------- */
+  function showShell(id){shells.forEach(function(s){$(s).classList.toggle("hidden",s!==id)})}
+  function showView(id){
+    views.forEach(function(v){$(v).classList.toggle("hidden",v!==id)});
+    ["lMsg","rMsg","f1Msg","f2Msg"].forEach(function(m){clearMsg($(m))});
+  }
+  function msg(el,text,type){el.textContent=text; el.className="msg "+type}
+  function clearMsg(el){el.textContent=""; el.className="msg"}
+  function findUser(q){
+    q=(q||"").trim().toLowerCase();
+    var list=readUsers()||[];
+    return list.filter(function(u){return u.username.toLowerCase()===q||u.email.toLowerCase()===q})[0];
+  }
+  function fmt(ts){return new Date(ts).toLocaleDateString("pt-PT")}
+  function esc(s){var d=document.createElement("div"); d.textContent=s; return d.innerHTML}
+
+  function route(){
+    var name=getSession(), u=name&&findUser(name);
+    if(!u){setSession(null); showShell("authShell"); showView("vLogin"); return;}
+    if(u.role==="admin"){renderAdmin(u); showShell("adminShell");}
+    else{renderClient(u); showShell("clientShell");}
+    window.scrollTo(0,0);
+  }
+
+  /* ---------- seletor Cliente / Administração ---------- */
+  function setRole(r){
+    currentRole=r;
+    $("roleClient").setAttribute("aria-pressed",r==="client");
+    $("roleAdmin").setAttribute("aria-pressed",r==="admin");
+    $("adminHint").classList.toggle("hidden",r!=="admin");
+    $("goRegister").classList.toggle("hidden",r==="admin");
+    if(r==="admin"){$("lUser").value="admin"; $("lPass").focus();}
+    else if($("lUser").value==="admin"){$("lUser").value="";}
+  }
+  $("roleClient").onclick=function(){setRole("client")};
+  $("roleAdmin").onclick=function(){setRole("admin")};
+
+  /* ---------- login ---------- */
+  $("vLogin").addEventListener("submit",function(e){
+    e.preventDefault();
+    var u=findUser($("lUser").value), pass=$("lPass").value;
+    var bad="Utilizador ou palavra-passe incorretos.";
+    if(!u||!pass){msg($("lMsg"),bad,"err"); return;}
+    hash(pass).then(function(h){
+      if(h!==u.hash){msg($("lMsg"),bad,"err"); return;}
+      if(currentRole==="admin"&&u.role!=="admin"){msg($("lMsg"),"Esta conta não tem acesso à administração.","err"); return;}
+      if(currentRole==="client"&&u.role==="admin"){msg($("lMsg"),"Esta é uma conta de administração. Escolhe «Administração».","err"); return;}
+      setSession(u.username); $("lPass").value=""; route();
+    });
+  });
+
+  /* ---------- registo ---------- */
+  $("vRegister").addEventListener("submit",function(e){
+    e.preventDefault();
+    var user=$("rUser").value.trim(), email=$("rEmail").value.trim(), pass=$("rPass").value, m=$("rMsg");
+    if(!/^[A-Za-z0-9_.-]{3,20}$/.test(user)){msg(m,"O utilizador deve ter 3 a 20 caracteres (letras, números, _ . -).","err"); return;}
+    if(!/^\S+@\S+\.\S+$/.test(email)){msg(m,"Indica um email válido.","err"); return;}
+    if(pass.length<4){msg(m,"A palavra-passe deve ter pelo menos 4 caracteres.","err"); return;}
+    if(findUser(user)||findUser(email)){msg(m,"Esse utilizador ou email já existe.","err"); return;}
+    hash(pass).then(function(h){
+      var list=readUsers()||[];
+      list.push({username:user,email:email,hash:h,role:"client",created:Date.now()});
+      saveUsers(list);
+      $("vRegister").reset(); showView("vLogin"); setRole("client");
+      msg($("lMsg"),"Conta criada. Já podes entrar.","ok");
+    });
+  });
+
+  /* ---------- esqueci a palavra-passe ---------- */
+  var resetFor=null;
+  $("vForgot1").addEventListener("submit",function(e){
+    e.preventDefault();
+    var u=findUser($("fUser").value);
+    if(!u){msg($("f1Msg"),"Não encontrámos nenhuma conta com esses dados.","err"); return;}
+    var code=String(Math.floor(100000+Math.random()*900000));
+    resetCodes[u.username]={code:code,exp:Date.now()+10*60*1000};
+    resetFor=u.username;
+    $("codeBox").textContent="Código para "+u.username+": "+code+" (válido 10 minutos). Modo demonstração: sem servidor de email, o código aparece aqui.";
+    showView("vForgot2"); $("fCode").focus();
+  });
+  $("vForgot2").addEventListener("submit",function(e){
+    e.preventDefault();
+    var m=$("f2Msg"), r=resetCodes[resetFor], np=$("fNew").value;
+    if(!r||Date.now()>r.exp){msg(m,"O código expirou. Pede um novo.","err"); return;}
+    if($("fCode").value.trim()!==r.code){msg(m,"Código incorreto.","err"); return;}
+    if(np.length<4){msg(m,"A palavra-passe deve ter pelo menos 4 caracteres.","err"); return;}
+    hash(np).then(function(h){
+      var list=readUsers()||[];
+      list.forEach(function(u){if(u.username===resetFor)u.hash=h});
+      saveUsers(list); delete resetCodes[resetFor];
+      $("vForgot1").reset(); $("vForgot2").reset(); showView("vLogin");
+      msg($("lMsg"),"Palavra-passe atualizada. Já podes entrar.","ok");
+    });
+  });
+
+  $("goForgot").onclick=function(){showView("vForgot1"); $("fUser").focus()};
+  $("goRegister").onclick=function(){showView("vRegister"); $("rUser").focus()};
+  Array.prototype.forEach.call(document.querySelectorAll("[data-back]"),function(a){
+    a.onclick=function(){showView("vLogin")};
+  });
+  // teclado nos "links"
+  Array.prototype.forEach.call(document.querySelectorAll(".links a"),function(a){
+    a.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault(); a.click();}});
+  });
+
+  /* ---------- logout ---------- */
+  Array.prototype.forEach.call(document.querySelectorAll("[data-logout]"),function(b){
+    b.onclick=function(){setSession(null); $("vLogin").reset(); setRole("client"); route();};
+  });
+
+  /* ---------- área do cliente ---------- */
+  function renderClient(u){
+    $("cName").textContent=u.username;
+    $("cInfo").textContent="Email: "+u.email+" · Conta criada em "+fmt(u.created);
+  }
+  function changePass(formId,oldId,newId,msgId,username){
+    var m=$(msgId), oldp=$(oldId).value, np=$(newId).value;
+    var u=findUser(username);
+    if(np.length<4){msg(m,"A nova palavra-passe deve ter pelo menos 4 caracteres.","err"); return;}
+    hash(oldp).then(function(h){
+      if(h!==u.hash){msg(m,"A palavra-passe atual está incorreta.","err"); return;}
+      return hash(np).then(function(nh){
+        var list=readUsers()||[];
+        list.forEach(function(x){if(x.username===username)x.hash=nh});
+        saveUsers(list); $(formId).reset(); msg(m,"Palavra-passe alterada.","ok");
+      });
+    });
+  }
+  $("cPassForm").addEventListener("submit",function(e){
+    e.preventDefault(); changePass("cPassForm","cOld","cNew","cMsg",getSession());
+  });
+
+  /* ---------- área de administração ---------- */
+  function renderAdmin(u){
+    $("aName").textContent=u.username;
+    var list=readUsers()||[];
+    $("aCount").textContent=list.filter(function(x){return x.role!=="admin"}).length;
+    var rows=list.map(function(x){
+      var acts=x.username===u.username?"—":
+        '<div class="acts"><button class="btn ghost small" data-reset="'+esc(x.username)+'">Repor passe</button>'+
+        '<button class="btn danger small" data-del="'+esc(x.username)+'">Eliminar</button></div>';
+      return "<tr><td>"+esc(x.username)+"</td><td>"+esc(x.email)+"</td><td>"+
+        (x.role==="admin"?"Administração":"Cliente")+"</td><td>"+fmt(x.created)+"</td><td>"+acts+"</td></tr>";
+    }).join("");
+    $("aRows").innerHTML=rows;
+  }
+  $("aRows").addEventListener("click",function(e){
+    var t=e.target, m=$("aListMsg"), list=readUsers()||[];
+    if(t.dataset.del){
+      if(!confirm("Eliminar a conta «"+t.dataset.del+"»?")) return;
+      saveUsers(list.filter(function(x){return x.username!==t.dataset.del}));
+      renderAdmin(findUser(getSession())); msg(m,"Conta eliminada.","ok");
+    }else if(t.dataset.reset){
+      var tmp="passe"+Math.floor(1000+Math.random()*9000);
+      hash(tmp).then(function(h){
+        list.forEach(function(x){if(x.username===t.dataset.reset)x.hash=h});
+        saveUsers(list);
+        msg(m,"Nova palavra-passe temporária de "+t.dataset.reset+": "+tmp,"ok");
+      });
+    }
+  });
+  $("aPassForm").addEventListener("submit",function(e){
+    e.preventDefault(); changePass("aPassForm","aOld","aNew","aMsg",getSession());
+  });
+
+  init();
+})();
+</script>
+</body>
+</html>
