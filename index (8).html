@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FilipeCams</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 160'%3E%3Crect width='200' height='160' fill='black'/%3E%3Cg fill='none' stroke='white' stroke-width='8'%3E%3Crect x='10' y='28' width='180' height='120' rx='18'/%3E%3Ccircle cx='100' cy='98' r='40'/%3E%3C/g%3E%3C/svg%3E">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; }
+
+        /* Contentor do visor da câmara */
+        .viewer-container { position: relative; flex: 1; width: 100%; max-height: calc(100vh - 160px); background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        
+        video { width: 100%; height: 100%; object-fit: cover; }
+        /* Aplica o efeito espelho apenas na câmara frontal */
+        video.mirror { transform: scaleX(-1); }
+
+        /* Animação do Flash ao tirar a foto */
+        .flash-effect { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; opacity: 0; z-index: 5; pointer-events: none; }
+        .flash-effect.active { animation: flashAnim 0.3s ease-out; }
+        @keyframes flashAnim { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+        /* Indicador de Gravação Ativa */
+        .recording-badge { position: absolute; top: 20px; left: 20px; background: rgba(255, 0, 0, 0.8); color: white; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; display: none; align-items: center; gap: 6px; z-index: 6; }
+
+        /* Seletor de Modo (Foto / Vídeo) */
+        .mode-selector { height: 40px; background: #000; display: flex; justify-content: center; align-items: center; gap: 30px; z-index: 10; }
+        .mode-btn { background: none; border: none; color: #888; font-weight: bold; font-size: 14px; cursor: pointer; letter-spacing: 1px; }
+        .mode-btn.active { color: #ffcc00; }
+
+        /* Barra de Controlos Inferior (Estilo App Nativa) */
+        .bottom-bar { height: 120px; background: rgba(0, 0, 0, 0.95); display: flex; align-items: center; justify-content: space-around; padding: 0 20px; z-index: 10; border-top: 1px solid #1a1a1a; }
+
+        /* Botão do Obturador (Tirar Foto / Gravar) */
+        .shutter-btn { width: 70px; height: 70px; border-radius: 50%; background: #ffffff; border: 5px solid #000000; box-shadow: 0 0 0 4px #ffffff; cursor: pointer; transition: all 0.2s; }
+        .shutter-btn:active { transform: scale(0.9); }
+        .shutter-btn.video-mode { background: #ff3b30; }
+        .shutter-btn.recording { background: #ff3b30; border-radius: 20%; width: 55px; height: 55px; }
+
+        /* Botão para alternar entre câmaras (Frontal/Traseira) */
+        .flip-btn { width: 45px; height: 45px; border-radius: 50%; background: #222222; border: none; color: #ffffff; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        
+        /* Miniatura da Galeria (Última Foto) com Contador */
+        .gallery-preview { width: 45px; height: 45px; border-radius: 8px; background: #222222; border: 2px solid #ffffff; background-size: cover; background-position: center; cursor: pointer; position: relative; display: flex; align-items: center; justify-content: center; }
+        .folder-badge { position: absolute; bottom: -6px; right: -6px; background: #007aff; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 1px solid white; }
+
+        /* Ecrã de Inicialização para contornar bloqueios locais */
+        .init-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000000; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; gap: 20px; }
+        .logo { width: 140px; height: auto; color: #ffffff; }
+        .brand { font-size: 28px; letter-spacing: 1px; }
+        .init-btn { background: #ffffff; color: #000000; border: none; padding: 15px 40px; font-size: 16px; font-weight: bold; border-radius: 30px; cursor: pointer; }
+
+        /* Modal da Pasta de Fotos */
+        .gallery-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 200; display: none; flex-direction: column; color: white; }
+        .gallery-header { height: 60px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #222; }
+        .close-gallery { background: none; border: none; color: #007aff; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .gallery-grid { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; overflow-y: auto; align-content: start; }
+        .gallery-item { width: 100%; aspect-ratio: 1; background-size: cover; background-position: center; position: relative; background-color: #111; cursor: pointer; }
+        .video-icon { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.7); padding: 2px 6px; border-radius: 4px; font-size: 10px; }
+
+        canvas { display: none; }
+        #cameraApp { display: none; flex-direction: column; justify-content: space-between; height: 100vh; }
+        #cameraApp.on { display: flex; }
+        .who { position: absolute; top: 16px; right: 16px; z-index: 6; display: flex; gap: 8px; align-items: center; color: #fff; font-size: 13px; background: rgba(0,0,0,.55); padding: 6px 6px 6px 12px; border-radius: 20px; }
+        .who button, .small-btn { background: #333; color: #fff; border: none; border-radius: 14px; padding: 6px 12px; cursor: pointer; font-size: 12px; }
+        #authView, #adminApp { display: none; position: fixed; inset: 0; background: #000; color: #fff; overflow-y: auto; z-index: 50; }
+        #authView.on { display: flex; align-items: center; justify-content: center; padding: 20px; }
+        #adminApp.on { display: block; padding: 24px 16px; }
+        .card { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; align-items: stretch; }
+        .card .logo { width: 70px; align-self: center; }
+        .card h2, .card .sub { text-align: center; }
+        .sub { color: #888; font-size: 13px; }
+        .card input { padding: 13px 14px; border-radius: 10px; border: 1px solid #333; background: #111; color: #fff; font-size: 15px; }
+        .card .main-btn { background: #fff; color: #000; border: none; padding: 13px; border-radius: 24px; font-weight: bold; font-size: 15px; cursor: pointer; }
+        .link { background: none; border: none; color: #007aff; cursor: pointer; font-size: 13px; }
+        .tabs { display: flex; background: #111; border-radius: 12px; padding: 3px; }
+        .tabs button { flex: 1; background: none; border: none; color: #888; padding: 9px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .tabs button.active { background: #fff; color: #000; }
+        .msg { min-height: 18px; font-size: 13px; text-align: center; color: #ff6b6b; }
+        .msg.ok { color: #4cd964; }
+        .admin-wrap { max-width: 720px; margin: 0 auto; }
+        .admin-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { text-align: left; padding: 10px 6px; border-bottom: 1px solid #222; }
+        td .small-btn { margin-right: 4px; }
+    </style>
+</head>
+<body>
+
+    <!-- Autenticação -->
+    <div id="authView" class="on">
+        <div class="card">
+            <svg class="logo" viewBox="0 0 200 160" fill="none" stroke="currentColor" stroke-width="8" stroke-linejoin="round" aria-label="FilipeCams">
+            <rect x="70" y="8" width="60" height="22" rx="4"/>
+            <rect x="42" y="14" width="16" height="12" rx="3" fill="currentColor"/>
+            <rect x="142" y="14" width="14" height="12" rx="3" fill="currentColor"/>
+            <rect x="10" y="28" width="180" height="120" rx="18"/>
+            <rect x="142" y="58" width="34" height="14" rx="4" stroke-width="6"/>
+            <circle cx="100" cy="98" r="48" stroke-width="6"/>
+            <circle cx="100" cy="98" r="34" stroke-width="12"/>
+            <circle cx="100" cy="98" r="18" stroke-width="4"/>
+            <circle cx="112" cy="86" r="6" fill="currentColor" stroke="none"/>
+            <circle cx="86" cy="106" r="3" fill="currentColor" stroke="none"/>
+        </svg>
+            <h2>FilipeCams</h2>
+            <div id="roleTabs" class="tabs">
+                <button id="tabCliente" class="active" onclick="setRole('cliente')">Cliente</button>
+                <button id="tabAdmin" onclick="setRole('admin')">Administração</button>
+            </div>
+            <form id="fLogin" class="card" onsubmit="return doLogin(event)" style="max-width:none">
+                <input id="lUser" placeholder="Utilizador" autocomplete="username" required>
+                <input id="lPass" type="password" placeholder="Palavra-passe" autocomplete="current-password" required>
+                <button class="main-btn">Entrar</button>
+                <button type="button" class="link" onclick="showForm('fForgot')">Esqueci-me da palavra-passe</button>
+                <button type="button" id="regLink" class="link" onclick="showForm('fReg')">Criar conta de cliente</button>
+            </form>
+            <form id="fReg" class="card" onsubmit="return doRegister(event)" style="max-width:none;display:none">
+                <p class="sub">Nova conta de cliente</p>
+                <input id="rUser" placeholder="Utilizador" required>
+                <input id="rEmail" type="email" placeholder="Email" required>
+                <input id="rPass" type="password" placeholder="Palavra-passe (mín. 4)" minlength="4" required>
+                <button class="main-btn">Criar conta</button>
+                <button type="button" class="link" onclick="showForm('fLogin')">Voltar ao login</button>
+            </form>
+            <form id="fForgot" class="card" onsubmit="return doForgot(event)" style="max-width:none;display:none">
+                <p class="sub">Indica o utilizador e o email da conta para definir uma nova palavra-passe.</p>
+                <input id="fUser" placeholder="Utilizador" required>
+                <input id="fEmail" type="email" placeholder="Email da conta" required>
+                <input id="fPass" type="password" placeholder="Nova palavra-passe (mín. 4)" minlength="4" required>
+                <button class="main-btn">Redefinir</button>
+                <button type="button" class="link" onclick="showForm('fLogin')">Voltar ao login</button>
+            </form>
+            <div id="authMsg" class="msg"></div>
+        </div>
+    </div>
+
+    <!-- Área de Administração -->
+    <div id="adminApp">
+        <div class="admin-wrap">
+            <div class="admin-top"><h2>Administração · <span id="adminName"></span></h2><button class="small-btn" onclick="logout()">Terminar sessão</button></div>
+            <p class="sub" style="margin-bottom:12px">Clientes registados: <b id="clientCount">0</b></p>
+            <table><thead><tr><th>Utilizador</th><th>Email</th><th>Ações</th></tr></thead><tbody id="userRows"></tbody></table>
+        </div>
+    </div>
+
+    <div id="cameraApp">
+    <!-- Janela inicial para forçar a permissão do browser -->
+    <div id="initOverlay" class="init-overlay">
+        <svg class="logo" viewBox="0 0 200 160" fill="none" stroke="currentColor" stroke-width="8" stroke-linejoin="round" aria-label="FilipeCams">
+            <rect x="70" y="8" width="60" height="22" rx="4"/>
+            <rect x="42" y="14" width="16" height="12" rx="3" fill="currentColor"/>
+            <rect x="142" y="14" width="14" height="12" rx="3" fill="currentColor"/>
+            <rect x="10" y="28" width="180" height="120" rx="18"/>
+            <rect x="142" y="58" width="34" height="14" rx="4" stroke-width="6"/>
+            <circle cx="100" cy="98" r="48" stroke-width="6"/>
+            <circle cx="100" cy="98" r="34" stroke-width="12"/>
+            <circle cx="100" cy="98" r="18" stroke-width="4"/>
+            <circle cx="112" cy="86" r="6" fill="currentColor" stroke="none"/>
+            <circle cx="86" cy="106" r="3" fill="currentColor" stroke="none"/>
+        </svg>
+        <h2 class="brand">FilipeCams</h2>
+        <p style="color: #666; font-size: 14px; text-align: center; padding: 0 20px;">Clique abaixo para inicializar o hardware de vídeo e áudio do dispositivo.</p>
+        <button class="init-btn" onclick="startApp()">Abrir Câmara</button>
+    </div>
+
+    <!-- Visor Principal -->
+    <div class="viewer-container">
+        <div id="recBadge" class="recording-badge">🔴 <span id="recTime">00:00</span></div>
+        <div class="who"><span id="whoName"></span><button onclick="logout()">Sair</button></div>
+        <div id="flash" class="flash-effect"></div>
+        <video id="cameraView" autoplay playsinline class="mirror"></video>
+    </div>
+
+    <!-- Seletor de Modos -->
+    <div class="mode-selector">
+        <button id="modeFoto" class="mode-btn active" onclick="changeMode('foto')">FOTO</button>
+        <button id="modeVideo" class="mode-btn" onclick="changeMode('video')">VÍDEO</button>
+    </div>
+
+    <!-- Interface Estilo iOS/Android -->
+    <div class="bottom-bar">
+        <!-- Esquerda: Miniatura da última foto com contador da pasta -->
+        <div id="preview" class="gallery-preview" onclick="openGallery()">
+            <span id="folderIcon" style="font-size: 18px;">📁</span>
+            <div id="folderCount" class="folder-badge">0</div>
+        </div>
+        
+        <!-- Centro: Botão de disparo dinâmico -->
+        <button id="shutter" class="shutter-btn" onclick="handleAction()"></button>
+        
+        <!-- Direita: Alternador de câmara (Frontal/Traseira) -->
+        <button class="flip-btn" onclick="switchCamera()">🔄</button>
+    </div>
+
+    <!-- Janela da Pasta / Galeria -->
+    <div id="galleryModal" class="gallery-modal">
+        <div class="gallery-header">
+            <h3>Pasta: 📁 Fotos FilipeCams</h3>
+            <button class="close-gallery" onclick="closeGallery()">Concluído</button>
+        </div>
+        <div id="galleryGrid" class="gallery-grid"></div>
+    </div>
+
+    <canvas id="captureCanvas"></canvas>
+    </div>
+
+    <script>
+        let currentStream = null;
+        let useFrontCamera = true;
+        let currentMode = 'foto'; 
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let isRecording = false;
+        let recordTimer = null;
+        let recordSeconds = 0;
+        
+        // Array local que simula a pasta local/galeria de fotos guardadas
+        let virtualFolder = [];
+
+        // Inicia a aplicação após o clique do utilizador
+        async function startApp() {
+            document.getElementById('initOverlay').style.display = 'none';
+            await initCamera();
+        }
+
+        // Configura e liga o fluxo de vídeo e áudio juntos
+        async function initCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+
+            const video = document.getElementById('cameraView');
+            const mode = useFrontCamera ? "user" : "environment";
+
+            try {
+                try {
+                    currentStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: mode },
+                        audio: true
+                    });
+                } catch (e) {
+                    // Se o microfone falhar, tenta só com vídeo (fotos continuam a funcionar)
+                    currentStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: mode },
+                        audio: false
+                    });
+                }
+                video.srcObject = currentStream;
+                video.muted = true;
+                video.classList.toggle('mirror', useFrontCamera);
+            } catch (err) {
+                console.error("Erro de hardware:", err);
+                let msg = "Não foi possível aceder à câmara.";
+                if (err.name === 'NotAllowedError') {
+                    msg = "Permissão negada. Clica no cadeado ao lado do endereço, permite a câmara e recarrega a página. Se abriste dentro de um pré-visualizador, abre o ficheiro diretamente no browser.";
+                } else if (err.name === 'NotFoundError') {
+                    msg = "Não foi encontrada nenhuma câmara neste dispositivo.";
+                } else if (err.name === 'NotReadableError') {
+                    msg = "A câmara está a ser usada por outra aplicação.";
+                } else if (!window.isSecureContext) {
+                    msg = "A câmara só funciona em https:// ou localhost.";
+                }
+                alert(msg);
+            }
+        }
+
+        // Alterna entre a câmara da frente e a de trás
+        async function switchCamera() {
+            if (isRecording) return;
+            useFrontCamera = !useFrontCamera;
+            await initCamera();
+        }
+
+        // Altera entre o modo Foto e Vídeo
+        function changeMode(mode) {
+            if (isRecording) return;
+            currentMode = mode;
+            const shutter = document.getElementById('shutter');
+            
+            document.getElementById('modeFoto').classList.toggle('active', mode === 'foto');
+            document.getElementById('modeVideo').classList.toggle('active', mode === 'video');
+
+            if (mode === 'video') {
+                shutter.classList.add('video-mode');
+            } else {
+                shutter.classList.remove('video-mode');
+            }
+        }
+
+        // Decide se tira foto ou controla o vídeo dependendo do modo ativo
+        function handleAction() {
+            if (currentMode === 'foto') {
+                capturePhoto();
+            } else {
+                if (!isRecording) {
+        
+startRecording();
+                } else {
+                    stopRecording();
+                }
+            }
+        }
+
+        // Tira uma foto a partir do frame atual do vídeo
+        function capturePhoto() {
+            const video = document.getElementById('cameraView');
+            if (!video.videoWidth) return;
+            const canvas = document.getElementById('captureCanvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            if (useFrontCamera) {
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+            }
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const flash = document.getElementById('flash');
+            flash.classList.remove('active');
+            void flash.offsetWidth;
+            flash.classList.add('active');
+
+            const url = canvas.toDataURL('image/jpeg', 0.92);
+            addToFolder({ type: 'foto', url: url, name: 'FilipeCams_' + Date.now() + '.jpg' });
+        }
+
+        // Começa a gravar vídeo + áudio
+        function startRecording() {
+            if (!currentStream) return;
+            recordedChunks = [];
+            const types = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'];
+            const mimeType = types.find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || '';
+            try {
+                mediaRecorder = mimeType ? new MediaRecorder(currentStream, { mimeType }) : new MediaRecorder(currentStream);
+            } catch (err) {
+                alert("Este browser não suporta gravação de vídeo.");
+                return;
+            }
+            mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+            mediaRecorder.onstop = () => {
+                const type = mediaRecorder.mimeType || 'video/webm';
+                const blob = new Blob(recordedChunks, { type: type });
+                const ext = type.includes('mp4') ? 'mp4' : 'webm';
+                addToFolder({ type: 'video', url: URL.createObjectURL(blob), name: 'FilipeCams_' + Date.now() + '.' + ext });
+            };
+            mediaRecorder.start();
+            isRecording = true;
+
+            document.getElementById('shutter').classList.add('recording');
+            const badge = document.getElementById('recBadge');
+            badge.style.display = 'flex';
+            recordSeconds = 0;
+            document.getElementById('recTime').textContent = '00:00';
+            recordTimer = setInterval(() => {
+                recordSeconds++;
+                const m = String(Math.floor(recordSeconds / 60)).padStart(2, '0');
+                const s = String(recordSeconds % 60).padStart(2, '0');
+                document.getElementById('recTime').textContent = m + ':' + s;
+            }, 1000);
+        }
+
+        // Pára a gravação
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+            isRecording = false;
+            clearInterval(recordTimer);
+            document.getElementById('shutter').classList.remove('recording');
+            document.getElementById('recBadge').style.display = 'none';
+        }
+
+        // Adiciona à pasta virtual e atualiza a miniatura
+        function addToFolder(item) {
+            virtualFolder.unshift(item);
+            document.getElementById('folderCount').textContent = virtualFolder.length;
+            if (item.type === 'foto') {
+                const preview = document.getElementById('preview');
+                preview.style.backgroundImage = 'url(' + item.url + ')';
+                document.getElementById('folderIcon').style.display = 'none';
+            }
+        }
+
+        // Galeria
+        function openGallery() {
+            const grid = document.getElementById('galleryGrid');
+            grid.innerHTML = '';
+            if (virtualFolder.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: #666; padding: 40px 0;">Ainda não há fotos nem vídeos.</p>';
+            }
+            virtualFolder.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'gallery-item';
+                if (item.type === 'foto') {
+                    div.style.backgroundImage = 'url(' + item.url + ')';
+                } else {
+                    div.innerHTML = '<video src="' + item.url + '" muted playsinline style="width:100%;height:100%;object-fit:cover;"></video><span class="video-icon">▶ Vídeo</span>';
+                }
+                div.onclick = () => {
+                    const a = document.createElement('a');
+                    a.href = item.url;
+                    a.download = item.name;
+                    a.click();
+                };
+                grid.appendChild(div);
+            });
+            document.getElementById('galleryModal').style.display = 'flex';
+        }
+
+        function closeGallery() {
+            document.getElementById('galleryModal').style.display = 'none';
+        }
+        // ===== Autenticação (demo local: dados guardados no browser) =====
+        let role = 'cliente';
+        const $ = id => document.getElementById(id);
+        const getUsers = () => { try { return JSON.parse(localStorage.getItem('fc_users')) || []; } catch (e) { return []; } };
+        const saveUsers = u => { try { localStorage.setItem('fc_users', JSON.stringify(u)); } catch (e) {} };
+        (function seed() {
+            const u = getUsers();
+            if (!u.some(x => x.u === 'admin')) { u.push({ u: 'admin', p: 'admin', email: 'admin@filipecams.pt', role: 'admin' }); saveUsers(u); }
+        })();
+        const msg = (t, ok) => { $('authMsg').textContent = t || ''; $('authMsg').className = 'msg' + (ok ? ' ok' : ''); };
+        function showForm(id) { ['fLogin', 'fReg', 'fForgot'].forEach(f => $(f).style.display = f === id ? 'flex' : 'none'); msg(''); }
+        function setRole(r) {
+            role = r;
+            $('tabCliente').classList.toggle('active', r === 'cliente');
+            $('tabAdmin').classList.toggle('active', r === 'admin');
+            $('regLink').style.display = r === 'cliente' ? '' : 'none';
+            showForm('fLogin');
+        }
+        function doLogin(e) {
+            e.preventDefault();
+            const name = $('lUser').value.trim().toLowerCase(), pass = $('lPass').value;
+            const user = getUsers().find(x => x.u === name && x.p === pass);
+            if (!user) { msg('Utilizador ou palavra-passe incorretos.'); return false; }
+            if (user.role !== role) { msg(role === 'admin' ? 'Esta conta não é de administração.' : 'Usa o separador Administração para entrar com esta conta.'); return false; }
+            try { sessionStorage.setItem('fc_session', user.u); } catch (e) {}
+            $('lPass').value = '';
+            route();
+            return false;
+        }
+        function doRegister(e) {
+            e.preventDefault();
+            const name = $('rUser').value.trim().toLowerCase(), email = $('rEmail').value.trim().toLowerCase();
+            const users = getUsers();
+            if (users.some(x => x.u === name)) { msg('Esse utilizador já existe.'); return false; }
+            users.push({ u: name, p: $('rPass').value, email: email, role: 'cliente' });
+            saveUsers(users);
+            $('fReg').reset(); showForm('fLogin'); msg('Conta criada! Já podes entrar.', true);
+            return false;
+        }
+        function doForgot(e) {
+            e.preventDefault();
+            const users = getUsers();
+            const user = users.find(x => x.u === $('fUser').value.trim().toLowerCase() && x.email === $('fEmail').value.trim().toLowerCase());
+            if (!user) { msg('Utilizador e email não coincidem.'); return false; }
+            user.p = $('fPass').value; saveUsers(users);
+            $('fForgot').reset(); showForm('fLogin'); msg('Palavra-passe alterada. Já podes entrar.', true);
+            return false;
+        }
+        function logout() {
+            if (isRecording) stopRecording();
+            if (currentStream) { currentStream.getTracks().forEach(t => t.stop()); currentStream = null; }
+            try { sessionStorage.removeItem('fc_session'); } catch (e) {}
+            virtualFolder = []; $('folderCount').textContent = '0';
+            $('preview').style.backgroundImage = ''; $('folderIcon').style.display = '';
+            $('initOverlay').style.display = 'flex';
+            route();
+        }
+        function route() {
+            let name = null; try { name = sessionStorage.getItem('fc_session'); } catch (e) {}
+            const user = getUsers().find(x => x.u === name);
+            $('authView').classList.toggle('on', !user);
+            $('adminApp').classList.toggle('on', !!user && user.role === 'admin');
+            $('cameraApp').classList.toggle('on', !!user && user.role === 'cliente');
+            if (user && user.role === 'admin') { $('adminName').textContent = user.u; renderAdmin(); }
+            if (user && user.role === 'cliente') $('whoName').textContent = user.u;
+            if (!user) setRole(role);
+        }
+        function renderAdmin() {
+            const clients = getUsers().filter(x => x.role === 'cliente');
+            $('clientCount').textContent = clients.length;
+            const tb = $('userRows'); tb.innerHTML = '';
+            if (!clients.length) tb.innerHTML = '<tr><td colspan="3" style="color:#666">Ainda não há clientes.</td></tr>';
+            clients.forEach(c => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td></td><td></td><td></td>';
+                tr.children[0].textContent = c.u; tr.children[1].textContent = c.email;
+                const r = document.createElement('button'); r.className = 'small-btn'; r.textContent = 'Nova pass';
+                r.onclick = () => { const np = prompt('Nova palavra-passe para ' + c.u + ':'); if (np && np.length >= 4) { const us = getUsers(); us.find(x => x.u === c.u).p = np; saveUsers(us); } };
+                const d = document.createElement('button'); d.className = 'small-btn'; d.textContent = 'Apagar';
+                d.onclick = () => { if (confirm('Apagar ' + c.u + '?')) { saveUsers(getUsers().filter(x => x.u !== c.u)); renderAdmin(); } };
+                tr.children[2].append(r, d); tb.appendChild(tr);
+            });
+        }
+        route();
+    </script>
+</body>
+</html>
