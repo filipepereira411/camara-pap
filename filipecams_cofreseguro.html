@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fotos PAP - Cofre Privado E2EE</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: #0f1115;
+      color: #f1f5f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      background: #181b21;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    header h1 {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .badge {
+      background: #1e293b;
+      color: #38bdf8;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 99px;
+      border: 1px solid #0284c7;
+    }
+
+    /* Ecrã de Autenticação / Chave Mestre */
+    .auth-box {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding: 16px;
+      background: #111318;
+      border-radius: 14px;
+      border: 1px solid #262b36;
+    }
+
+    .auth-box p {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #334155;
+      background: #0f1115;
+      color: #fff;
+      font-size: 0.95rem;
+    }
+
+    button {
+      padding: 12px 16px;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+
+    .btn-secondary {
+      background: #262b36;
+      color: #e2e8f0;
+    }
+
+    /* Visor da Câmara */
+    .camera-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 3/4;
+      background: #000;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .btn-shutter {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: #fff;
+      border: 5px solid #475569;
+    }
+
+    .btn-shutter:active {
+      transform: scale(0.92);
+    }
+
+    .btn-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #262b36;
+      color: #fff;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Modal Galeria */
+    .gallery-section {
+      border-top: 1px solid #262b36;
+      padding-top: 16px;
+    }
+
+    .gallery-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .gallery-item {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #0f1115;
+    }
+
+    .gallery-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .status {
+      font-size: 0.8rem;
+      color: #38bdf8;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>📷 Fotos PAP</h1>
+      <span class="badge">🔒 E2EE Ativo</span>
+    </header>
+
+    <!-- Passo 1: Login e Chave de Encriptação -->
+    <div id="authSection" class="auth-box">
+      <p><strong>Acesso Multi-Dispositivo & Privacidade Total:</strong><br>
+      A sua palavra-passe gera a chave local. Nem o administrador nem o servidor conseguem ver as suas fotos.</p>
+      <input type="email" id="userEmail" placeholder="O seu e-mail (sincronização)" required />
+      <input type="password" id="masterPassword" placeholder="Palavra-passe secreta (Chave E2EE)" required />
+      <button class="btn-primary" onclick="unlockVault()">Desbloquear Câmara & Cofre</button>
+    </div>
+
+    <!-- Passo 2: Aplicação Principal -->
+    <div id="appSection" class="hidden">
+      <div id="statusMsg" class="status">Câmara pronta. Encriptação local ativa.</div>
+
+      <div class="camera-wrapper">
+        <video id="video" autoplay playsinline></video>
+      </div>
+
+      <div class="controls">
+        <button class="btn-icon" onclick="toggleCamera()" title="Trocar Câmara">🔄</button>
+        <button class="btn-shutter" onclick="captureAndEncrypt()" title="Tirar Foto"></button>
+        <button class="btn-icon" onclick="lockVault()" title="Bloquear Cofre">🔒</button>
+      </div>
+
+      <div class="gallery-section">
+        <div class="gallery-header">
+          <h3>📁 Cofre Desencriptado (<span id="photoCount">0</span>)</h3>
+          <button class="btn-secondary" style="padding: 6px 10px; font-size: 0.8rem;" onclick="syncFromCloud()">Sincronizar</button>
+        </div>
+        <div id="galleryGrid" class="gallery-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="canvas" class="hidden"></canvas>
+
+  <script>
+    let stream = null;
+    let facingMode = "environment"; // 'user' = frontal, 'environment' = traseira
+    let cryptoKey = null;
+    let currentUser = null;
+
+    // 1. Derivar chave AES-GCM a partir da password (Zero-Knowledge)
+    async function deriveKey(password, email) {
+      const enc = new TextEncoder();
+      const keyMaterial = await window.crypto.subtle.importKey(
+        "raw",
+        enc.encode(password),
+        { name: "PBKDF2" },
+        false,
+        ["deriveKey"]
+      );
+
+      return window.crypto.subtle.deriveKey(
+        {
+          name: "PBKDF2",
+          salt: enc.encode(email.toLowerCase().trim()),
+          iterations: 100000,
+          hash: "SHA-256"
+        },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt", "decrypt"]
+      );
+    }
+
+    // 2. Desbloquear Cofre e Iniciar Câmara
+    async function unlockVault() {
+      const email = document.getElementById("userEmail").value;
+      const password = document.getElementById("masterPassword").value;
+
+      if (!email || password.length < 4) {
+        alert("Introduza o e-mail e uma palavra-passe com pelo menos 4 caracteres.");
+        return;
+      }
+
+      currentUser = email.toLowerCase().trim();
+      cryptoKey = await deriveKey(password, currentUser);
+
+      document.getElementById("authSection").classList.add("hidden");
+      document.getElementById("appSection").classList.remove("hidden");
+
+      await startCamera();
+      await loadEncryptedGallery();
+    }
+
+    function lockVault() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      cryptoKey = null;
+      document.getElementById("masterPassword").value = "";
+      document.getElementById("galleryGrid").innerHTML = "";
+      document.getElementById("appSection").classList.add("hidden");
+      document.getElementById("authSection").classList.remove("hidden");
+    }
+
+    // 3. Controlo de Câmara e Troca Frontal/Traseira
+    async function startCamera() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: facingMode },
+          audio: false
+        });
+        document.getElementById("video").srcObject = stream;
+      } catch (err) {
+        document.getElementById("statusMsg").innerText = "Erro ao aceder à câmara: " + err.message;
+      }
+    }
+
+    async function toggleCamera() {
+      facingMode = facingMode === "environment" ? "user" : "environment";
+      await startCamera();
+    }
+
+    // 4. Capturar, Encriptar e Guardar
+    async function captureAndEncrypt() {
+      const video = document.getElementById("video");
+      const canvas = document.getElementById("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0);
+
+      // Converter imagem para ArrayBuffer
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.85));
+      const arrayBuffer = await blob.arrayBuffer();
+
+      // Gerar IV aleatório e encriptar
+      const iv = window.crypto.getRandomValues(new Uint8Array(12));
+      const encryptedBuffer = await window.crypto.subtle.encrypt(
+        { name: "AES-GCM", iv: iv },
+        cryptoKey,
+        arrayBuffer
+      );
+
+      // Converter para Base64 para envio/armazenamento
+      const payload = {
+        id: Date.now(),
+        iv: bufferToBase64(iv),
+        data: bufferToBase64(encryptedBuffer)
+      };
+
+      await saveToCloudOrLocal(payload);
+      document.getElementById("statusMsg").innerText = "Foto encriptada e guardada com sucesso!";
+      await loadEncryptedGallery();
+    }
+
+    // 5. Simulação de Nuvem (Substituir por fetch('/api/photos') na Vercel)
+    async function saveToCloudOrLocal(payload) {
+      const storageKey = `pap_vault_${currentUser}`;
+      const existing = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      existing.unshift(payload);
+      localStorage.setItem(storageKey, JSON.stringify(existing));
+
+      /* Exemplo de ligação real à API da Vercel:
+      await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: currentUser, ...payload })
+      });
+      */
+    }
+
+    // 6. Carregar e Desencriptar Galeria
+    
