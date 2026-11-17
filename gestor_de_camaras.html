@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Câmara PAP</title>
+    <style>
+        :root { --primary: #2563eb; --dark: #172033; --light: #f4f7fb; --border: #dbe3ef; --success: #16834b; --danger: #c62828; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Arial, sans-serif; color: var(--dark); background: var(--light); }
+        header { padding: 28px 6%; color: white; background: linear-gradient(135deg, #172033, #2563eb); }
+        header h1 { margin: 0 0 6px; }
+        header p { margin: 0 0 20px; opacity: .85; }
+        nav { display: flex; flex-wrap: wrap; gap: 18px; }
+        nav a { color: white; text-decoration: none; font-weight: bold; }
+        main { width: min(1120px, 92%); margin: 30px auto; }
+        section { margin-bottom: 32px; }
+        .hero { display: flex; justify-content: space-between; gap: 20px; align-items: center; flex-wrap: wrap; }
+        .hero h2 { font-size: clamp(1.7rem, 4vw, 2.5rem); margin: 0 0 8px; }
+        .button, button { border: 0; border-radius: 8px; padding: 11px 16px; cursor: pointer; font-weight: bold; }
+        .button, button[type="submit"] { background: var(--primary); color: white; }
+        button[type="reset"] { background: #e7edf5; color: var(--dark); }
+        .stats, .camera-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
+        .card, article, form { padding: 20px; border: 1px solid var(--border); border-radius: 12px; background: white; box-shadow: 0 3px 12px #1720330b; }
+        .stat strong { display: block; font-size: 2rem; color: var(--primary); }
+        .stat span { color: #64748b; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap; }
+        #pesquisa { width: min(100%, 300px); }
+        article h3 { margin-top: 0; }
+        article p { color: #526174; }
+        .status { display: inline-block; padding: 5px 9px; border-radius: 20px; font-size: .85rem; font-weight: bold; }
+        .online { color: var(--success); background: #dff7e9; }
+        .offline { color: var(--danger); background: #ffebeb; }
+        .camera-actions { display: flex; gap: 8px; margin-top: 16px; }
+        .remove { background: #fff0f0; color: var(--danger); }
+        label { display: block; margin: 12px 0 5px; font-weight: bold; }
+        input { width: 100%; padding: 11px; border: 1px solid #bcc9d9; border-radius: 7px; font: inherit; }
+        form { max-width: 620px; }
+        footer { padding: 25px; text-align: center; color: #64748b; }
+        .empty { grid-column: 1 / -1; text-align: center; padding: 30px; color: #64748b; }
+        @media (max-width: 600px) { header { padding: 24px 4%; } main { width: 92%; } }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Câmara PAP</h1>
+        <p>Sistema de monitorização de câmaras</p>
+        <nav aria-label="Navegação principal">
+            <a href="#inicio">Início</a> |
+            <a href="#camaras">Câmaras</a> |
+            <a href="#adicionar">Adicionar câmara</a> |
+            <a href="#sobre">Sobre o projeto</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="inicio">
+            <h2>Painel principal</h2>
+            <div class="hero">
+                <div><h2>Monitorização simples e segura</h2><p>Gere todas as tuas câmaras num só lugar.</p></div>
+                <a class="button" href="#adicionar">+ Adicionar câmara</a>
+            </div>
+            <div class="stats">
+                <div class="card stat"><strong id="total">0</strong><span>Total de câmaras</span></div>
+                <div class="card stat"><strong id="online">0</strong><span>Câmaras online</span></div>
+                <div class="card stat"><strong id="offline">0</strong><span>Câmaras offline</span></div>
+            </div>
+        </section>
+
+        <section id="camaras">
+            <div class="toolbar"><h2>As minhas câmaras</h2><input id="pesquisa" type="search" placeholder="Pesquisar câmaras..."></div>
+            <div id="lista" class="camera-grid"></div>
+        </section>
+
+        <section id="adicionar">
+            <h2>Adicionar câmara</h2>
+            <form id="formulario">
+                <label for="nome">Nome da câmara:</label>
+                <input type="text" id="nome" required>
+                <label for="localizacao">Localização:</label>
+                <input type="text" id="localizacao" required>
+                <label for="endereco">Endereço IP ou URL:</label>
+                <input type="text" id="endereco" placeholder="192.168.1.100" required>
+                <p><button type="submit">Guardar câmara</button> <button type="reset">Limpar</button></p>
+            </form>
+        </section>
+
+        <section id="sobre">
+            <h2>Sobre o projeto</h2>
+            <p>Este projeto foi desenvolvido para a Prova de Aptidão Profissional (PAP).</p>
+            <p>Objetivo: permitir consultar e organizar câmaras de segurança numa única aplicação.</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Câmara PAP - Filipe Pereira</p>
+    </footer>
+    <script>
+        const iniciais = [
+            { nome: 'Câmara da entrada', localizacao: 'Entrada principal', endereco: '192.168.1.101', online: true },
+            { nome: 'Câmara da sala', localizacao: 'Sala de estar', endereco: '192.168.1.102', online: true },
+            { nome: 'Câmara do exterior', localizacao: 'Jardim', endereco: '192.168.1.103', online: false }
+        ];
+        let camaras = JSON.parse(localStorage.getItem('camarasPap')) || iniciais;
+        const lista = document.getElementById('lista');
+
+        function mostrarCamaras(filtro = '') {
+            const resultado = camaras.filter(c => `${c.nome} ${c.localizacao}`.toLowerCase().includes(filtro.toLowerCase()));
+            lista.innerHTML = resultado.length ? resultado.map(c => { const i = camaras.indexOf(c); return `
+                <article>
+                    <h3>${c.nome}</h3>
+                    <span class="status ${c.online ? 'online' : 'offline'}">${c.online ? '● Online' : '● Offline'}</span>
+                    <p><strong>Localização:</strong> ${c.localizacao}</p><p><strong>Endereço:</strong> ${c.endereco}</p>
+                    <div class="camera-actions"><button onclick="alternarEstado(${i})">Alterar estado</button><button class="remove" onclick="removerCamera(${i})">Remover</button></div>
+                </article>`; }).join('') : '<p class="empty">Nenhuma câmara encontrada.</p>';
+            document.getElementById('total').textContent = camaras.length;
+            document.getElementById('online').textContent = camaras.filter(c => c.online).length;
+            document.getElementById('offline').textContent = camaras.filter(c => !c.online).length;
+            localStorage.setItem('camarasPap', JSON.stringify(camaras));
+        }
+        function removerCamera(i) { if (confirm('Queres remover esta câmara?')) { camaras.splice(i, 1); mostrarCamaras(); } }
+        function alternarEstado(i) { camaras[i].online = !camaras[i].online; mostrarCamaras(); }
+        document.getElementById('formulario').addEventListener('submit', event => {
+            event.preventDefault();
+            camaras.push({ nome: document.getElementById('nome').value, localizacao: document.getElementById('localizacao').value, endereco: document.getElementById('endereco').value, online: true });
+            event.target.reset(); mostrarCamaras(); location.hash = 'camaras';
+        });
+        document.getElementById('pesquisa').addEventListener('input', event => mostrarCamaras(event.target.value));
+        mostrarCamaras();
+    </script>
+</body>
+</html>
