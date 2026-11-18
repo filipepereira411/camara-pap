@@ -64,7 +64,7 @@ video{width:100%;height:100%;object-fit:cover}video.mirror{transform:scaleX(-1)}
 <div id="msg" class="msg"></div></div></div>
 
 <div id="app" class="view">
-<div class="top"><span id="who"></span><span><button onclick="chpw()">Mudar pass</button> <button onclick="logout()">Sair</button></span></div>
+<div class="top"><span id="who"></span><span><button onclick="syncOpen()">🔄 Sincronizar</button> <button onclick="chpw()">Mudar pass</button> <button onclick="logout()">Sair</button></span></div>
 <div class="tabs"><button id="tC" class="on" onclick="tab('cam')">CÂMARA</button><button id="tF" onclick="tab('fotos')">FOTOS</button></div>
 <div id="camBox"><video id="vid" autoplay playsinline muted class="mirror"></video><div id="rec">🔴 <span id="rt">00:00</span></div><div id="fl"></div></div>
 <div class="modes" id="modes"><button id="mF" class="on" onclick="setMode('foto')">FOTO</button><button id="mV" onclick="setMode('video')">VÍDEO</button></div>
@@ -77,8 +77,15 @@ video{width:100%;height:100%;object-fit:cover}video.mirror{transform:scaleX(-1)}
 <div id="admin" class="view"><div class="top"><span>Administração · <span id="aw"></span></span><button onclick="logout()">Sair</button></div>
 <p class="sub" style="margin:8px 0 14px">O administrador gere contas, mas a app não lhe mostra as fotos nem os vídeos dos clientes.</p>
 <table><thead><tr><th>Utilizador</th><th>Criada em</th><th>Ações</th></tr></thead><tbody id="rows"></tbody></table></div>
+<div id="sync" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:25;align-items:center;justify-content:center;padding:20px"><div class="card">
+<h2>Sincronizar dispositivos</h2><p class="sub">Abre a app no outro dispositivo, entra na mesma conta, carrega em Sincronizar e escreve lá este código (ou escreve aqui o código dele). Os dois têm de estar abertos ao mesmo tempo.</p>
+<p class="sub" style="margin-top:6px">O TEU CÓDIGO</p><div id="mycode" style="text-align:center;font-size:30px;font-weight:700;letter-spacing:5px">…</div>
+<button class="link" onclick="newCode()">↻ Gerar código</button>
+<input id="ocode" placeholder="Código do outro dispositivo" maxlength="8" autocapitalize="characters" style="text-align:center;letter-spacing:3px">
+<button class="btn" onclick="syncConnect()">Ligar</button><div id="sst" class="msg ok"></div><button class="link" onclick="$('sync').style.display='none'">Fechar</button></div></div>
 <div id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
 const $=i=>document.getElementById(i);
 let me=null,stream=null,front=true,photos=[],cur=-1,m='login',mode_='foto',mr=null,chunks=[],timer=null,secs=0;
@@ -110,7 +117,7 @@ $('go').onclick=async()=>{const u=$('em').value.trim().toLowerCase(),p=$('pw').v
  const f=users.find(x=>x.u===u&&x.p===h);if(!f)return say('Utilizador ou palavra-passe incorretos.');
  try{sessionStorage.setItem('fc_s',f.u)}catch(e){}$('pw').value='';route()};
 function logout(){try{sessionStorage.removeItem('fc_s')}catch(e){}route()}
-async function route(){stopCam();if(mr&&mr.state!=='inactive'){mr.onstop=null;mr.stop()}clearInterval(timer);$('rec').style.display='none';
+async function route(){stopCam();if(mr&&mr.state!=='inactive'){mr.onstop=null;mr.stop()}clearInterval(timer);$('rec').style.display='none';if(peer){try{peer.destroy()}catch(e){}peer=null;conn=null}
  photos.forEach(p=>URL.revokeObjectURL(p.url));photos=[];closeV();
  let n=null;try{n=sessionStorage.getItem('fc_s')}catch(e){}const u=getU().find(x=>x.u===n);
  if(!u){me=null;show('auth');return mode('login')}me=u.u;
@@ -129,7 +136,8 @@ function setMode(x){if(mr&&mr.state==='recording')return;mode_=x;$('mF').classLi
 function tab(t){const c=t==='cam';$('tC').classList.toggle('on',c);$('tF').classList.toggle('on',!c);
  $('camBox').style.display=c?'':'none';$('bar').style.display=c?'':'none';$('modes').style.display=c?'':'none';$('gal').classList.toggle('on',!c);
  c?startCam():stopCam()}
-async function save(blob,kind,type){try{await tx('readwrite',s=>s.add({user:me,kind,blob,type,t:Date.now()}))}catch(e){return toast('Não foi possível guardar.')}
+async function save(blob,kind,type){const it={user:me,kind,blob,type,t:Date.now(),uid:uid()};try{await tx('readwrite',s=>s.add(it))}catch(e){return toast('Não foi possível guardar.')}
+ if(conn&&conn.open)sendFile(it,conn);
  toast(kind==='video'?'Vídeo guardado ✓':'Foto guardada ✓');loadPhotos()}
 function act(){mode_==='foto'?snap():(mr&&mr.state==='recording'?mr.stop():rec())}
 function snap(){const v=$('vid');if(!v.videoWidth)return toast('A câmara ainda não está pronta.');
@@ -151,7 +159,7 @@ async function rec(){if(!stream||!window.MediaRecorder)return toast('Gravação 
 function dayLabel(d){const a=new Date(d),t=new Date(),y=new Date(Date.now()-864e5);
  return a.toDateString()===t.toDateString()?'Hoje':a.toDateString()===y.toDateString()?'Ontem':a.toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'})}
 async function loadPhotos(){photos.forEach(p=>URL.revokeObjectURL(p.url));
- try{photos=((await tx('readonly',s=>s.index('user').getAll(me)))||[]).sort((a,b)=>b.t-a.t)}catch(e){photos=[];toast('Armazenamento indisponível.')}
+ try{photos=(await myMedia()).sort((a,b)=>b.t-a.t)}catch(e){photos=[];toast('Armazenamento indisponível.')}
  photos.forEach(p=>p.url=URL.createObjectURL(p.blob));
  const g=$('gal');g.innerHTML='';
  if(!photos.length){g.innerHTML='<p class="empty">Ainda não tens fotos nem vídeos. Vai à câmara e cria o primeiro!</p>';$('thumb').style.backgroundImage='';return}
@@ -169,7 +177,8 @@ function openV(i){cur=i;const p=photos[i],v=p.kind==='video';
  $('dl').href=p.url;$('dl').download='FilipeCams_'+p.id+(v?(p.type.includes('mp4')?'.mp4':'.webm'):'.jpg');$('viewer').style.display='flex'}
 function closeV(){$('viewer').style.display='none';$('big').removeAttribute('src');$('bigv').pause();$('bigv').removeAttribute('src')}
 async function del(){if(!confirm('Apagar este item?'))return;const p=photos[cur];
- try{await tx('readwrite',s=>s.delete(p.id))}catch(e){return toast('Não foi possível apagar.')}closeV();toast('Apagado');loadPhotos()}
+ try{await tx('readwrite',s=>s.delete(p.id))}catch(e){return toast('Não foi possível apagar.')}
+ if(p.uid){setD([...getD(),p.uid]);if(conn&&conn.open)conn.send({t:'del',uids:[p.uid]})}closeV();toast('Apagado');loadPhotos()}
 
 /* ---- Administração: gere contas, nunca mostra média ---- */
 function admin(){const t=$('rows');t.innerHTML='';const cl=getU().filter(u=>u.role!=='admin').sort((a,b)=>b.c-a.c);
@@ -185,6 +194,41 @@ function admin(){const t=$('rows');t.innerHTML='';const cl=getU().filter(u=>u.ro
    try{await tx('readwrite',s=>{s.index('user').getAllKeys(u.u).onsuccess=e=>e.target.result.forEach(k=>s.delete(k))})}catch(e){}admin()};
   c.append(r,d);tr.append(a,b,c);t.appendChild(tr)});
  if(!cl.length)t.innerHTML='<tr><td colspan="3" style="color:#666">Ainda não há clientes.</td></tr>'}
+
+/* ---- Sincronização entre dispositivos (ligação direta, sem servidor de dados) ---- */
+let peer=null,conn=null,lt=null;
+const uid=()=>(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2,12));
+const sst=t=>{$('sst').textContent=t||''};
+const getD=()=>{try{return JSON.parse(localStorage.getItem('fc_del_'+me))||[]}catch(e){return[]}};
+const setD=a=>{try{localStorage.setItem('fc_del_'+me,JSON.stringify([...new Set(a)]))}catch(e){}};
+async function myMedia(){let a=[];try{a=(await tx('readonly',s=>s.index('user').getAll(me)))||[]}catch(e){}
+ const fix=a.filter(x=>!x.uid);if(fix.length){fix.forEach(x=>x.uid=uid());try{await tx('readwrite',s=>fix.forEach(x=>s.put(x)))}catch(e){}}return a}
+async function sendFile(it,c){c.send({t:'file',uid:it.uid,tm:it.t,kind:it.kind,type:it.type,buf:await it.blob.arrayBuffer()})}
+async function applyDels(u){if(!u||!u.length)return;setD([...getD(),...u]);const a=await myMedia();
+ for(const x of a)if(u.includes(x.uid))await tx('readwrite',s=>s.delete(x.id));clearTimeout(lt);lt=setTimeout(loadPhotos,300)}
+async function gotFile(d){if(getD().includes(d.uid))return;const a=await myMedia();if(a.some(x=>x.uid===d.uid))return;
+ await tx('readwrite',s=>s.add({user:me,kind:d.kind,blob:new Blob([d.buf],{type:d.type}),type:d.type,t:d.tm,uid:d.uid}));
+ sst('A receber…');clearTimeout(lt);lt=setTimeout(()=>{loadPhotos();sst('Sincronizado ✓')},400)}
+function attach(c){conn=c;
+ c.on('open',async()=>{sst('Ligado ✓ a sincronizar…');const a=await myMedia();c.send({t:'list',uids:a.map(x=>x.uid),dels:getD()})});
+ c.on('data',async d=>{if(!d)return;
+  if(d.t==='list'){await applyDels(d.dels);const have=new Set((await myMedia()).map(x=>x.uid)),gone=new Set(getD());
+   const need=(d.uids||[]).filter(u=>!have.has(u)&&!gone.has(u));if(need.length)c.send({t:'need',uids:need});else sst('Já está tudo sincronizado ✓')}
+  else if(d.t==='need'){const a=await myMedia();for(const u of d.uids){const it=a.find(x=>x.uid===u);if(it)await sendFile(it,c)}}
+  else if(d.t==='file')await gotFile(d);
+  else if(d.t==='del')await applyDels(d.uids)});
+ c.on('close',()=>{if(conn===c)conn=null;sst('Ligação terminada.')});c.on('error',e=>sst('Erro: '+e.type))}
+function startPeer(){if(!window.Peer){sst('Sem acesso ao serviço de ligação (precisa de internet).');return false}
+ const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789',r=crypto.getRandomValues(new Uint8Array(8));let code='';r.forEach(n=>code+=A[n%A.length]);
+ $('mycode').textContent='…';peer=new Peer('fcam-'+code);peer.on('open',()=>{$('mycode').textContent=code;sst('Pronto: mostra este código no outro dispositivo.')});
+ setTimeout(()=>{if($('mycode').textContent==='…')sst('Não foi possível gerar o código. Abre o site publicado (https) num browser normal, não o pré-visualizador do Claude, e confirma a internet.')},8000);
+ peer.on('connection',c=>{if(conn&&conn.open){c.close();return}
+  if(!confirm('Um dispositivo quer sincronizar contigo. Aceitar?')){c.close();return}attach(c)});
+ peer.on('error',e=>{if(e.type==='unavailable-id'){try{peer.destroy()}catch(x){}peer=null;startPeer()}else sst('Erro: '+e.type)});return true}
+function newCode(){if(peer){try{peer.destroy()}catch(e){}peer=null;conn=null}sst('A gerar código…');startPeer()}
+function syncOpen(){$('sync').style.display='flex';sst('');if(!peer)startPeer()}
+function syncConnect(){const o=$('ocode').value.trim().toUpperCase();if(!/^[A-Z0-9]{8}$/.test(o))return sst('O código tem 8 letras/números.');
+ if(!peer&&!startPeer())return;const go=()=>{sst('A ligar…');attach(peer.connect('fcam-'+o,{reliable:true}))};peer.open?go():peer.once('open',go)}
 
 let ip=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();ip=e;$('inst').style.display=''});
 $('inst').onclick=async()=>{if(!ip)return;ip.prompt();await ip.userChoice;ip=null;$('inst').style.display='none'};
