@@ -1,187 +1,193 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplicação Câmara Nativa - PAP</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #000000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; }
+<html lang="pt-PT"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FilipeCams</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="FilipeCams">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.view{display:none;position:fixed;inset:0;flex-direction:column;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+#auth{align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+.card{width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px}
+.card svg{width:90px;align-self:center;color:#fff}.card h2,.sub{text-align:center}.sub{color:#888;font-size:13px}
+input{padding:13px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;font-size:15px}
+.btn{background:#fff;color:#000;border:none;padding:13px;border-radius:24px;font-weight:700;font-size:15px;cursor:pointer}
+.link{background:none;border:none;color:#0a84ff;cursor:pointer;font-size:13px}
+.msg{min-height:18px;font-size:13px;text-align:center;color:#ff6b6b}.msg.ok{color:#4cd964}
+.top{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-size:13px;color:#aaa}
+.top button,.sm{background:#333;color:#fff;border:none;border-radius:14px;padding:6px 12px;cursor:pointer;font-size:12px}
+.tabs{display:flex;justify-content:center;gap:28px;padding:6px}.tabs button{background:none;border:none;color:#888;font-weight:700;letter-spacing:1px;cursor:pointer}.tabs .on{color:#ffcc00}
+#camBox{flex:1;position:relative;overflow:hidden;min-height:0}
+video{width:100%;height:100%;object-fit:cover}video.mirror{transform:scaleX(-1)}
+#fl{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}#fl.go{animation:f .3s ease-out}@keyframes f{from{opacity:1}to{opacity:0}}
+.bar{height:110px;display:flex;align-items:center;justify-content:space-around;border-top:1px solid #1a1a1a}
+.shutter{width:70px;height:70px;border-radius:50%;background:#fff;border:5px solid #000;box-shadow:0 0 0 4px #fff;cursor:pointer}.shutter:active{transform:scale(.9)}
+.round{width:46px;height:46px;border-radius:50%;background:#222;border:none;color:#fff;font-size:20px;cursor:pointer}
+#thumb{width:46px;height:46px;border-radius:8px;border:2px solid #fff;background:#222 center/cover;cursor:pointer}
+#gal{flex:1;overflow-y:auto;display:none;grid-template-columns:repeat(3,1fr);gap:3px;padding:3px;align-content:start}
+#gal.on{display:grid}#gal div{aspect-ratio:1;background:#111 center/cover;cursor:pointer}
+.empty{grid-column:1/-1;text-align:center;color:#666;padding:50px 20px}
+#viewer{background:#000;z-index:20;align-items:center;justify-content:center}#viewer img{max-width:100%;max-height:78%;object-fit:contain}
+#viewer .row{display:flex;gap:10px;margin-top:16px}
+#toast{position:fixed;left:50%;bottom:130px;transform:translateX(-50%);background:#222;padding:10px 16px;border-radius:20px;font-size:13px;opacity:0;transition:.3s;pointer-events:none;z-index:30}#toast.on{opacity:1}
+#admin{padding:16px;overflow-y:auto}table{width:100%;max-width:700px;margin:0 auto;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:10px 6px;border-bottom:1px solid #222}
+.h{grid-column:1/-1;padding:14px 6px 4px;font-size:14px;font-weight:600}
+.modes{display:flex;justify-content:center;gap:26px;padding:6px}.modes button{background:none;border:none;color:#888;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer}.modes .on{color:#ffcc00}
+#gal div{position:relative;overflow:hidden}#gal video{width:100%;height:100%;object-fit:cover}.pl{position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.7);border-radius:4px;padding:1px 6px;font-size:10px}
+#rec{position:absolute;top:14px;left:14px;background:rgba(255,0,0,.8);padding:5px 12px;border-radius:18px;font-size:13px;font-weight:700;display:none}
+.shutter.vid{background:#ff3b30}.shutter.rec{background:#ff3b30;border-radius:20%;width:55px;height:55px}
+#viewer video{max-width:100%;max-height:78%}td .sm{margin-right:4px}
+</style></head><body>
 
-        /* Contentor do visor da câmara */
-        .viewer-container { position: relative; flex: 1; width: 100%; max-height: calc(100vh - 160px); background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        
-        video { width: 100%; height: 100%; object-fit: cover; }
-        /* Aplica o efeito espelho apenas na câmara frontal */
-        video.mirror { transform: scaleX(-1); }
+<div id="auth" class="view"><div class="card">
+<svg viewBox="0 0 200 160" fill="none" stroke="currentColor" stroke-width="8" stroke-linejoin="round"><rect x="70" y="8" width="60" height="22" rx="4"/><rect x="10" y="28" width="180" height="120" rx="18"/><circle cx="100" cy="98" r="48" stroke-width="6"/><circle cx="100" cy="98" r="34" stroke-width="12"/><circle cx="112" cy="86" r="6" fill="currentColor" stroke="none"/></svg>
+<h2>FilipeCams</h2><p class="sub" id="sub"></p>
+<input id="em" placeholder="Utilizador" autocomplete="username" autocapitalize="none">
+<input id="pw" type="password" placeholder="Palavra-passe" autocomplete="current-password">
+<button class="btn" id="go"></button>
+<button class="link" id="l1"></button><button class="link" id="l2"></button>
+<button class="link" id="inst" style="display:none">📲 Instalar app</button>
+<button class="link" id="inst" style="display:none">⬇ Instalar app</button>
+<div id="msg" class="msg"></div></div></div>
 
-        /* Animação do Flash ao tirar a foto */
-        .flash-effect { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; opacity: 0; z-index: 5; pointer-events: none; }
-        .flash-effect.active { animation: flashAnim 0.3s ease-out; }
-        @keyframes flashAnim { 0% { opacity: 1; } 100% { opacity: 0; } }
+<div id="app" class="view">
+<div class="top"><span id="who"></span><span><button onclick="chpw()">Mudar pass</button> <button onclick="logout()">Sair</button></span></div>
+<div class="tabs"><button id="tC" class="on" onclick="tab('cam')">CÂMARA</button><button id="tF" onclick="tab('fotos')">FOTOS</button></div>
+<div id="camBox"><video id="vid" autoplay playsinline muted class="mirror"></video><div id="rec">🔴 <span id="rt">00:00</span></div><div id="fl"></div></div>
+<div class="modes" id="modes"><button id="mF" class="on" onclick="setMode('foto')">FOTO</button><button id="mV" onclick="setMode('video')">VÍDEO</button></div>
+<div id="gal"></div>
+<div class="bar" id="bar"><div id="thumb" onclick="tab('fotos')"></div><button class="shutter" id="sh" onclick="act()" aria-label="Disparar"></button><button class="round" onclick="flip()" aria-label="Trocar câmara">🔄</button></div>
+</div>
 
-        /* Indicador de Gravação Ativa */
-        .recording-badge { position: absolute; top: 20px; left: 20px; background: rgba(255, 0, 0, 0.8); color: white; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; display: none; align-items: center; gap: 6px; z-index: 6; }
+<div id="viewer" class="view"><img id="big" alt=""><video id="bigv" controls playsinline style="display:none"></video><div class="row"><button class="sm" onclick="closeV()">Fechar</button><a class="sm" id="dl" download style="text-decoration:none">Descarregar</a><button class="sm" onclick="del()">Apagar</button></div></div>
 
-        /* Seletor de Modo (Foto / Vídeo) */
-        .mode-selector { height: 40px; background: #000; display: flex; justify-content: center; align-items: center; gap: 30px; z-index: 10; }
-        .mode-btn { background: none; border: none; color: #888; font-weight: bold; font-size: 14px; cursor: pointer; letter-spacing: 1px; }
-        .mode-btn.active { color: #ffcc00; }
+<div id="admin" class="view"><div class="top"><span>Administração · <span id="aw"></span></span><button onclick="logout()">Sair</button></div>
+<p class="sub" style="margin:8px 0 14px">O administrador gere contas, mas a app não lhe mostra as fotos nem os vídeos dos clientes.</p>
+<table><thead><tr><th>Utilizador</th><th>Criada em</th><th>Ações</th></tr></thead><tbody id="rows"></tbody></table></div>
+<div id="toast"></div>
 
-        /* Barra de Controlos Inferior (Estilo App Nativa) */
-        .bottom-bar { height: 120px; background: rgba(0, 0, 0, 0.95); display: flex; align-items: center; justify-content: space-around; padding: 0 20px; z-index: 10; border-top: 1px solid #1a1a1a; }
+<script>
+const $=i=>document.getElementById(i);
+let me=null,stream=null,front=true,photos=[],cur=-1,m='login',mode_='foto',mr=null,chunks=[],timer=null,secs=0;
+const toast=t=>{$('toast').textContent=t;$('toast').classList.add('on');setTimeout(()=>$('toast').classList.remove('on'),2500)};
+const show=v=>['auth','app','admin'].forEach(x=>$(x).style.display=x===v?'flex':'none');
+const say=(t,ok)=>{$('msg').textContent=t||'';$('msg').className='msg'+(ok?' ok':'')};
 
-        /* Botão do Obturador (Tirar Foto / Gravar) */
-        .shutter-btn { width: 70px; height: 70px; border-radius: 50%; background: #ffffff; border: 5px solid #000000; box-shadow: 0 0 0 4px #ffffff; cursor: pointer; transition: all 0.2s; }
-        .shutter-btn:active { transform: scale(0.9); }
-        .shutter-btn.video-mode { background: #ff3b30; }
-        .shutter-btn.recording { background: #ff3b30; border-radius: 20%; width: 55px; height: 55px; }
+/* ---- Dados locais: contas (localStorage) e média (IndexedDB) ---- */
+async function H(s){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('fc:'+s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){return 'fc:'+s}}
+const getU=()=>{try{return JSON.parse(localStorage.getItem('fc_users'))||[]}catch(e){return[]}};
+const setU=u=>{try{localStorage.setItem('fc_users',JSON.stringify(u))}catch(e){toast('Não foi possível guardar.')}};
+const idb=new Promise((ok,no)=>{const r=indexedDB.open('filipecams',1);r.onupgradeneeded=()=>r.result.createObjectStore('media',{keyPath:'id',autoIncrement:true}).createIndex('user','user');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
+idb.catch(()=>{});
+const tx=async(mode,fn)=>{const d=await idb;return new Promise((ok,no)=>{const t=d.transaction('media',mode),r=fn(t.objectStore('media'));t.oncomplete=()=>ok(r&&r.result);t.onerror=()=>no(t.error)})};
 
-        /* Botão para alternar entre câmaras (Frontal/Traseira) */
-        .flip-btn { width: 45px; height: 45px; border-radius: 50%; background: #222222; border: none; color: #ffffff; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        
-        /* Miniatura da Galeria (Última Foto) com Contador */
-        .gallery-preview { width: 45px; height: 45px; border-radius: 8px; background: #222222; border: 2px solid #ffffff; background-size: cover; background-position: center; cursor: pointer; position: relative; display: flex; align-items: center; justify-content: center; }
-        .folder-badge { position: absolute; bottom: -6px; right: -6px; background: #007aff; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 1px solid white; }
+/* ---- Autenticação ---- */
+function mode(x){m=x;say('');const c={login:['Entrar','Entrar na tua conta','Criar conta','Esqueci-me da palavra-passe'],
+ reg:['Criar conta','Nova conta de cliente','Já tenho conta',''],forgot:['','Pede ao administrador para redefinir a tua palavra-passe.','Voltar ao login','']}[x];
+ $('go').textContent=c[0];$('sub').textContent=c[1];$('l1').textContent=c[2];$('l2').textContent=c[3];
+ $('go').style.display=c[0]?'':'none';$('l1').style.display=c[2]?'':'none';$('l2').style.display=c[3]?'':'none';
+ $('em').style.display=$('pw').style.display=x==='forgot'?'none':''}
+$('l1').onclick=()=>mode(m==='login'?'reg':'login');$('l2').onclick=()=>mode('forgot');
+$('go').onclick=async()=>{const u=$('em').value.trim().toLowerCase(),p=$('pw').value;
+ if(!/^[a-z0-9._-]{3,20}$/.test(u))return say('Utilizador: 3 a 20 letras, números, . _ ou -');
+ if(p.length<4)return say('A palavra-passe precisa de pelo menos 4 caracteres.');
+ const users=getU(),h=await H(p);
+ if(m==='reg'){if(users.some(x=>x.u===u))return say('Esse utilizador já existe.');
+  users.push({u,p:h,role:'cliente',c:Date.now()});setU(users);$('pw').value='';mode('login');return say('Conta criada! Já podes entrar.',true)}
+ const f=users.find(x=>x.u===u&&x.p===h);if(!f)return say('Utilizador ou palavra-passe incorretos.');
+ try{sessionStorage.setItem('fc_s',f.u)}catch(e){}$('pw').value='';route()};
+function logout(){try{sessionStorage.removeItem('fc_s')}catch(e){}route()}
+async function route(){stopCam();if(mr&&mr.state!=='inactive'){mr.onstop=null;mr.stop()}clearInterval(timer);$('rec').style.display='none';
+ photos.forEach(p=>URL.revokeObjectURL(p.url));photos=[];closeV();
+ let n=null;try{n=sessionStorage.getItem('fc_s')}catch(e){}const u=getU().find(x=>x.u===n);
+ if(!u){me=null;show('auth');return mode('login')}me=u.u;
+ if(u.role==='admin'){$('aw').textContent=u.u;show('admin');return admin()}
+ $('who').textContent=u.u;show('app');tab('cam');loadPhotos()}
+async function chpw(){const p=prompt('Nova palavra-passe (mín. 4):');if(!p)return;if(p.length<4)return toast('Mínimo 4 caracteres.');
+ const us=getU();us.find(x=>x.u===me).p=await H(p);setU(us);toast('Palavra-passe alterada ✓')}
 
-        /* Ecrã de Inicialização para contornar bloqueios locais */
-        .init-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000000; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; gap: 20px; }
-        .init-btn { background: #ffffff; color: #000000; border: none; padding: 15px 40px; font-size: 16px; font-weight: bold; border-radius: 30px; cursor: pointer; }
+/* ---- Cliente: câmara (foto e vídeo) ---- */
+function stopCam(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}
+async function startCam(){stopCam();try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:front?'user':'environment'},audio:false});
+ $('vid').srcObject=stream;$('vid').classList.toggle('mirror',front)}
+ catch(e){toast(e.name==='NotAllowedError'?'Permite o acesso à câmara no browser.':'Não foi possível abrir a câmara.')}}
+function flip(){if(mr&&mr.state==='recording')return;front=!front;startCam()}
+function setMode(x){if(mr&&mr.state==='recording')return;mode_=x;$('mF').classList.toggle('on',x==='foto');$('mV').classList.toggle('on',x==='video');$('sh').classList.toggle('vid',x==='video')}
+function tab(t){const c=t==='cam';$('tC').classList.toggle('on',c);$('tF').classList.toggle('on',!c);
+ $('camBox').style.display=c?'':'none';$('bar').style.display=c?'':'none';$('modes').style.display=c?'':'none';$('gal').classList.toggle('on',!c);
+ c?startCam():stopCam()}
+async function save(blob,kind,type){try{await tx('readwrite',s=>s.add({user:me,kind,blob,type,t:Date.now()}))}catch(e){return toast('Não foi possível guardar.')}
+ toast(kind==='video'?'Vídeo guardado ✓':'Foto guardada ✓');loadPhotos()}
+function act(){mode_==='foto'?snap():(mr&&mr.state==='recording'?mr.stop():rec())}
+function snap(){const v=$('vid');if(!v.videoWidth)return toast('A câmara ainda não está pronta.');
+ const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;const x=c.getContext('2d');
+ if(front){x.translate(c.width,0);x.scale(-1,1)}x.drawImage(v,0,0);
+ $('fl').classList.remove('go');void $('fl').offsetWidth;$('fl').classList.add('go');
+ c.toBlob(b=>save(b,'foto','image/jpeg'),'image/jpeg',.9)}
+async function rec(){if(!stream||!window.MediaRecorder)return toast('Gravação não suportada neste browser.');
+ let ms=stream;try{const a=await navigator.mediaDevices.getUserMedia({audio:true});ms=new MediaStream([...stream.getVideoTracks(),...a.getAudioTracks()])}catch(e){toast('Sem microfone: a gravar só imagem.')}
+ const mt=['video/webm;codecs=vp9,opus','video/webm','video/mp4'].find(t=>MediaRecorder.isTypeSupported(t))||'';
+ chunks=[];mr=mt?new MediaRecorder(ms,{mimeType:mt}):new MediaRecorder(ms);const type=mr.mimeType||'video/webm';
+ mr.ondataavailable=e=>e.data.size&&chunks.push(e.data);
+ mr.onstop=()=>{clearInterval(timer);$('rec').style.display='none';$('sh').classList.remove('rec');
+  ms.getAudioTracks().forEach(t=>t.stop());save(new Blob(chunks,{type}),'video',type)};
+ mr.start();$('sh').classList.add('rec');$('rec').style.display='block';secs=0;$('rt').textContent='00:00';
+ timer=setInterval(()=>{secs++;$('rt').textContent=String(secs/60|0).padStart(2,'0')+':'+String(secs%60).padStart(2,'0')},1000)}
 
-        /* Modal da Pasta de Fotos */
-        .gallery-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 200; display: none; flex-direction: column; color: white; }
-        .gallery-header { height: 60px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #222; }
-        .close-gallery { background: none; border: none; color: #007aff; font-size: 16px; font-weight: bold; cursor: pointer; }
-        .gallery-grid { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; overflow-y: auto; align-content: start; }
-        .gallery-item { width: 100%; aspect-ratio: 1; background-size: cover; background-position: center; position: relative; background-color: #111; cursor: pointer; }
-        .video-icon { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.7); padding: 2px 6px; border-radius: 4px; font-size: 10px; }
+/* ---- Cliente: galeria por dia (tipo Google Photos) ---- */
+function dayLabel(d){const a=new Date(d),t=new Date(),y=new Date(Date.now()-864e5);
+ return a.toDateString()===t.toDateString()?'Hoje':a.toDateString()===y.toDateString()?'Ontem':a.toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'})}
+async function loadPhotos(){photos.forEach(p=>URL.revokeObjectURL(p.url));
+ try{photos=((await tx('readonly',s=>s.index('user').getAll(me)))||[]).sort((a,b)=>b.t-a.t)}catch(e){photos=[];toast('Armazenamento indisponível.')}
+ photos.forEach(p=>p.url=URL.createObjectURL(p.blob));
+ const g=$('gal');g.innerHTML='';
+ if(!photos.length){g.innerHTML='<p class="empty">Ainda não tens fotos nem vídeos. Vai à câmara e cria o primeiro!</p>';$('thumb').style.backgroundImage='';return}
+ let last='';
+ photos.forEach((p,i)=>{const l=dayLabel(p.t);
+  if(l!==last){last=l;const h=document.createElement('div');h.className='h';h.textContent=l;h.style.cssText='aspect-ratio:auto;cursor:default;background:none';g.appendChild(h)}
+  const d=document.createElement('div');
+  if(p.kind==='video')d.innerHTML='<video src="'+p.url+'#t=0.1" preload="metadata" muted playsinline></video><span class="pl">▶ Vídeo</span>';
+  else d.style.backgroundImage='url("'+p.url+'")';
+  d.onclick=()=>openV(i);g.appendChild(d)});
+ const f=photos.find(p=>p.kind!=='video');$('thumb').style.backgroundImage=f?'url("'+f.url+'")':''}
+function openV(i){cur=i;const p=photos[i],v=p.kind==='video';
+ $('big').style.display=v?'none':'';$('bigv').style.display=v?'':'none';
+ if(v)$('bigv').src=p.url;else $('big').src=p.url;
+ $('dl').href=p.url;$('dl').download='FilipeCams_'+p.id+(v?(p.type.includes('mp4')?'.mp4':'.webm'):'.jpg');$('viewer').style.display='flex'}
+function closeV(){$('viewer').style.display='none';$('big').removeAttribute('src');$('bigv').pause();$('bigv').removeAttribute('src')}
+async function del(){if(!confirm('Apagar este item?'))return;const p=photos[cur];
+ try{await tx('readwrite',s=>s.delete(p.id))}catch(e){return toast('Não foi possível apagar.')}closeV();toast('Apagado');loadPhotos()}
 
-        canvas { display: none; }
-    </style>
-</head>
-<body>
+/* ---- Administração: gere contas, nunca mostra média ---- */
+function admin(){const t=$('rows');t.innerHTML='';const cl=getU().filter(u=>u.role!=='admin').sort((a,b)=>b.c-a.c);
+ cl.forEach(u=>{const tr=document.createElement('tr');
+  const a=document.createElement('td');a.textContent=u.u;const b=document.createElement('td');b.textContent=new Date(u.c).toLocaleDateString('pt-PT');
+  const c=document.createElement('td');
+  const r=document.createElement('button');r.className='sm';r.textContent='Nova pass';
+  r.onclick=async()=>{const p=prompt('Nova palavra-passe para '+u.u+' (mín. 4):');if(!p||p.length<4)return;
+   const us=getU();us.find(x=>x.u===u.u).p=await H(p);setU(us);toast('Palavra-passe redefinida ✓')};
+  const d=document.createElement('button');d.className='sm';d.textContent='Apagar';
+  d.onclick=async()=>{if(!confirm('Apagar a conta '+u.u+' e os seus ficheiros?'))return;
+   setU(getU().filter(x=>x.u!==u.u));
+   try{await tx('readwrite',s=>{s.index('user').getAllKeys(u.u).onsuccess=e=>e.target.result.forEach(k=>s.delete(k))})}catch(e){}admin()};
+  c.append(r,d);tr.append(a,b,c);t.appendChild(tr)});
+ if(!cl.length)t.innerHTML='<tr><td colspan="3" style="color:#666">Ainda não há clientes.</td></tr>'}
 
-    <!-- Janela inicial para forçar a permissão do browser -->
-    <div id="initOverlay" class="init-overlay">
-        <h2>Aplicação de Câmara</h2>
-        <p style="color: #666; font-size: 14px; text-align: center; padding: 0 20px;">Clique abaixo para inicializar o hardware de vídeo e áudio do dispositivo.</p>
-        <button class="init-btn" onclick="startApp()">Abrir Câmara</button>
-    </div>
-
-    <!-- Visor Principal -->
-    <div class="viewer-container">
-        <div id="recBadge" class="recording-badge">🔴 <span id="recTime">00:00</span></div>
-        <div id="flash" class="flash-effect"></div>
-        <video id="cameraView" autoplay playsinline class="mirror"></video>
-    </div>
-
-    <!-- Seletor de Modos -->
-    <div class="mode-selector">
-        <button id="modeFoto" class="mode-btn active" onclick="changeMode('foto')">FOTO</button>
-        <button id="modeVideo" class="mode-btn" onclick="changeMode('video')">VÍDEO</button>
-    </div>
-
-    <!-- Interface Estilo iOS/Android -->
-    <div class="bottom-bar">
-        <!-- Esquerda: Miniatura da última foto com contador da pasta -->
-        <div id="preview" class="gallery-preview" onclick="openGallery()">
-            <span id="folderIcon" style="font-size: 18px;">📁</span>
-            <div id="folderCount" class="folder-badge">0</div>
-        </div>
-        
-        <!-- Centro: Botão de disparo dinâmico -->
-        <button id="shutter" class="shutter-btn" onclick="handleAction()"></button>
-        
-        <!-- Direita: Alternador de câmara (Frontal/Traseira) -->
-        <button class="flip-btn" onclick="switchCamera()">🔄</button>
-    </div>
-
-    <!-- Janela da Pasta / Galeria -->
-    <div id="galleryModal" class="gallery-modal">
-        <div class="gallery-header">
-            <h3>Pasta: 📁 Fotos PAP</h3>
-            <button class="close-gallery" onclick="closeGallery()">Concluído</button>
-        </div>
-        <div id="galleryGrid" class="gallery-grid"></div>
-    </div>
-
-    <canvas id="captureCanvas"></canvas>
-
-    <script>
-        let currentStream = null;
-        let useFrontCamera = true;
-        let currentMode = 'foto'; 
-        let mediaRecorder = null;
-        let recordedChunks = [];
-        let isRecording = false;
-        let recordTimer = null;
-        let recordSeconds = 0;
-        
-        // Array local que simula a pasta local/galeria de fotos guardadas
-        let virtualFolder = [];
-
-        // Inicia a aplicação após o clique do utilizador
-        async function startApp() {
-            document.getElementById('initOverlay').style.display = 'none';
-            await initCamera();
-        }
-
-        // Configura e liga o fluxo de vídeo e áudio juntos
-        async function initCamera() {
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
-            }
-
-            const video = document.getElementById('cameraView');
-            const mode = useFrontCamera ? "user" : "environment";
-
-            try {
-                // Forçamos a captura de áudio e vídeo em simultâneo para evitar falhas no MediaRecorder
-                currentStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: mode },
-                    audio: true
-                });
-                video.srcObject = currentStream;
-                video.muted = true; // Silencia o próprio visor para não fazer eco nas colunas
-
-                if (useFrontCamera) {
-                    video.classList.add('mirror');
-                } else {
-                    video.classList.remove('mirror');
-                }
-            } catch (err) {
-                console.error("Erro de hardware:", err);
-                alert("Não foi possível aceder à câmara/microfone. Certifica-te de que deste todas as permissões.");
-            }
-        }
-
-        // Alterna entre a câmara da frente e a de trás
-        async function switchCamera() {
-            if (isRecording) return;
-            useFrontCamera = !useFrontCamera;
-            await initCamera();
-        }
-
-        // Altera entre o modo Foto e Vídeo
-        function changeMode(mode) {
-            if (isRecording) return;
-            currentMode = mode;
-            const shutter = document.getElementById('shutter');
-            
-            document.getElementById('modeFoto').classList.toggle('active', mode === 'foto');
-            document.getElementById('modeVideo').classList.toggle('active', mode === 'video');
-
-            if (mode === 'video') {
-                shutter.classList.add('video-mode');
-            } else {
-                shutter.classList.remove('video-mode');
-            }
-        }
-
-        // Decide se tira foto ou controla o vídeo dependendo do modo ativo
-        function handleAction() {
-            if (currentMode === 'foto') {
-                capturePhoto();
-            } else {
-                if (!isRecording) {
-        
+let ip=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();ip=e;$('inst').style.display=''});
+$('inst').onclick=async()=>{if(!ip)return;ip.prompt();await ip.userChoice;ip=null;$('inst').style.display='none'};
+if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
+(async()=>{const u=getU();if(!u.some(x=>x.u==='admin')){u.push({u:'admin',p:await H('admin'),role:'admin',c:Date.now()});setU(u)}route()})();
+</script></body></html>
