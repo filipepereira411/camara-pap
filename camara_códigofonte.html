@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fotos — Biblioteca e Câmara</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231a73e8'/%3E%3Cpath d='M14.5 9h-4L8.5 12H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h20a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-2.5l-2-3z' fill='none' stroke='white' stroke-width='2'/%3E%3Ccircle cx='16' cy='18' r='3.4' fill='none' stroke='white' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<style>
+  :root{ --blue:#1a73e8; --blue-h:#1b66c9; --ink:#202124; --mut:#5f6368; --line:#e8eaed; --chipbg:#f1f3f4; }
+  html,body{height:100%}
+  body{font-family:'Figtree',system-ui,sans-serif;background:#fff;color:var(--ink);-webkit-font-smoothing:antialiased}
+
+  .ms{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;line-height:1;letter-spacing:normal;
+      text-transform:none;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-smoothing:antialiased;
+      font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;font-size:24px;vertical-align:middle}
+  .ms.f{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+
+  .navicon{width:40px;height:40px;border-radius:9999px;display:grid;place-items:center;color:var(--mut);transition:background .15s;cursor:pointer}
+  .navicon:hover{background:var(--chipbg)}
+  .navicon:active{transform:scale(.92)}
+
+  .navitem{display:flex;align-items:center;gap:20px;width:100%;height:52px;border-radius:9999px;padding:0 24px;
+    font-size:14px;font-weight:500;color:var(--mut);cursor:pointer;transition:background .15s;text-align:left}
+  .navitem:hover{background:var(--chipbg)}
+  .navitem.active{background:#e8f0fe;color:#1967d2;font-weight:600}
+  .navitem .ms{font-size:22px}
+
+  .ph-item{position:relative;aspect-ratio:4/3;overflow:hidden;border-radius:10px;background:var(--chipbg);cursor:pointer}
+  .ph-item img,.ph-item video{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s ease}
+  .ph-item:hover img,.ph-item:hover video{transform:scale(1.04)}
+  .ph-item .badge-dur{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.65);color:#fff;font-size:10px;
+    font-weight:700;padding:2px 6px;border-radius:5px;font-variant-numeric:tabular-nums}
+  .ph-item .fav-mark{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:9999px;background:rgba(255,255,255,.92);
+    display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  .ph-item .play-mark{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+
+  .m-card{width:300px;height:190px;flex:none;position:relative;border-radius:12px;overflow:hidden;cursor:pointer;background:#000}
+  .m-card img{width:100%;height:100%;object-fit:cover;display:block}
+  .m-card .m-label{position:absolute;left:0;right:0;bottom:0;padding:26px 14px 12px;color:#fff;font-size:13px;font-weight:600;
+    background:linear-gradient(to top,rgba(0,0,0,.72),transparent);letter-spacing:.01em}
+
+  .favs-item{width:112px;height:112px;flex:none;position:relative;border-radius:10px;overflow:hidden;cursor:pointer;background:var(--chipbg)}
+  .favs-item img,.favs-item video{width:100%;height:100%;object-fit:cover;display:block}
+
+  .tile{aspect-ratio:4/3;border-radius:10px;background:var(--chipbg);display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:6px;color:var(--mut);cursor:pointer;transition:background .15s;border:none;font-family:inherit;font-size:13px;font-weight:600}
+  .tile:hover{background:#e8eaed}
+  .tile .ms{font-size:26px}
+
+  .snack{position:fixed;left:24px;bottom:24px;z-index:80;background:#202124;color:#fff;border-radius:10px;padding:12px 18px;
+    font-size:14px;font-weight:500;display:flex;align-items:center;gap:18px;box-shadow:0 6px 20px rgba(0,0,0,.3);
+    animation:snackIn .25s ease;max-width:min(420px,calc(100vw - 48px))}
+  .snack .act{color:#8ab4f8;font-weight:700;cursor:pointer;white-space:nowrap}
+  .snack.out{opacity:0;transform:translateY(10px);transition:all .3s}
+  @keyframes snackIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+  /* ---- câmara (modal escuro) ---- */
+  .camtab{font-size:14px;font-weight:600;color:rgba(255,255,255,.55);padding:8px 10px;border-bottom:2px solid transparent;cursor:pointer;transition:color .15s}
+  .camtab.active{color:#fff;border-bottom-color:#fff}
+  .camtab:hover{color:rgba(255,255,255,.85)}
+  .cbtn{width:46px;height:46px;border-radius:9999px;display:grid;place-items:center;color:rgba(255,255,255,.85);
+    transition:background .15s;cursor:pointer;border:none;background:transparent}
+  .cbtn:hover{background:rgba(255,255,255,.12)}
+  .cbtn:active{transform:scale(.9)}
+  .cbtn.active{background:rgba(255,255,255,.2);color:#fff}
+  .cbtn .ms{font-size:22px}
+
+  .shutter{width:76px;height:76px;border-radius:9999px;border:3px solid #fff;display:grid;place-items:center;
+    background:transparent;cursor:pointer;transition:transform .12s;flex:none}
+  .shutter:active{transform:scale(.92)}
+  .shutter-inner{display:block;width:60px;height:60px;border-radius:9999px;background:#fff;transition:all .2s}
+  .shutter-inner.rec{width:34px;height:34px;border-radius:9px;background:#ea4335}
+  .shutter.recording{animation:recPulse 1.5s infinite}
+  .shutter.busy{opacity:.35;pointer-events:none}
+  @keyframes recPulse{0%{box-shadow:0 0 0 0 rgba(234,67,53,.5)}100%{box-shadow:0 0 0 18px rgba(234,67,53,0)}}
+  @keyframes blink{50%{opacity:.15}}
+
+  .corner{position:absolute;width:24px;height:24px;border:0 solid rgba(255,255,255,.5);pointer-events:none}
+  .c-tl{top:10px;left:10px;border-top-width:2px;border-left-width:2px}
+  .c-tr{top:10px;right:10px;border-top-width:2px;border-right-width:2px}
+  .c-bl{bottom:10px;left:10px;border-bottom-width:2px;border-left-width:2px}
+  .c-br{bottom:10px;right:10px;border-bottom-width:2px;border-right-width:2px}
+  .vignette{background:radial-gradient(130% 130% at 50% 50%,transparent 62%,rgba(0,0,0,.38) 100%)}
+
+  #camGrid span{position:absolute;background:rgba(255,255,255,.22)}
+  #camGrid .gv1{left:33.333%;top:0;bottom:0;width:1px}
+  #camGrid .gv2{left:66.666%;top:0;bottom:0;width:1px}
+  #camGrid .gh1{top:33.333%;left:0;right:0;height:1px}
+  #camGrid .gh2{top:66.666%;left:0;right:0;height:1px}
+
+  #camFlash{position:absolute;inset:0;background:#fff;opacity:0;transition:opacity .18s;pointer-events:none}
+  #camFlash.on{opacity:.85}
+  #focusRing{position:absolute;left:50%;top:50%;width:96px;height:96px;margin:-48px 0 0 -48px;border:2px solid #fbbc04;
+    border-radius:14px;opacity:0;pointer-events:none}
+  #focusRing.show{animation:focusPulse .6s ease}
+  @keyframes focusPulse{0%{opacity:1;transform:scale(1.5)}55%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.96)}}
+  #cdNum{font-size:clamp(72px,16vw,130px);font-weight:800;color:rgba(255,255,255,.94);text-shadow:0 4px 40px rgba(0,0,0,.6)}
+  #cdNum.cd-pop{animation:cdPop .5s ease}
+  @keyframes cdPop{0%{transform:scale(1.5);opacity:0}100%{transform:scale(1);opacity:1}}
+  .rec-ring{box-shadow:inset 0 0 0 2px rgba(234,67,53,.85)}
+  .mono{font-variant-numeric:tabular-nums;letter-spacing:.04em}
+  .spin-slow{animation:spinSlow 2.6s linear infinite}
+  @keyframes spinSlow{to{transform:rotate(360deg)}}
+
+  .fchip{white-space:nowrap;padding:8px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.25);
+    background:rgba(255,255,255,.08);color:rgba(255,255,255,.85);font-size:12px;font-weight:600;cursor:pointer;
+    font-family:inherit;transition:all .15s}
+  .fchip:hover{background:rgba(255,255,255,.18)}
+  .fchip.active{background:#fff;color:#111;border-color:#fff;font-weight:800}
+
+  .vbtn{width:48px;height:48px;border-radius:9999px;display:grid;place-items:center;color:var(--ink);
+    transition:background .15s;cursor:pointer;border:none;background:transparent}
+  .vbtn:hover{background:var(--chipbg)}
+  .vbtn:active{transform:scale(.9)}
+  .vbtn.danger:hover{color:#d93025;background:#fce8e6}
+  .vbtn .ms{font-size:24px}
+
+  .grid-area{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+  select option{color:#111}
+  .fade-el{transition:opacity .3s}
+  ::-webkit-scrollbar{height:9px;width:9px}
+  ::-webkit-scrollbar-thumb{background:#dadce0;border-radius:9px}
+  ::-webkit-scrollbar-track{background:transparent}
+</style>
+</head>
+<body class="overflow-hidden">
+
+<div class="flex h-full">
+
+  <!-- ===== Sidebar ===== -->
+  <div id="backdrop" class="fixed inset-0 bg-black/40 z-30 hidden md:hidden"></div>
+  <aside id="sidebar" class="fixed md:static z-40 top-0 left-0 bottom-0 w-[264px] bg-white md:bg-white flex-col md:flex -translate-x-full md:translate-x-0 transition-transform duration-200 shrink-0">
+    <div class="flex items-center h-[68px] pl-4 pr-6 gap-1">
+      <button class="navicon md:hidden" id="btnCloseMenu"><span class="ms">close</span></button>
+      <div class="flex items-center gap-2.5 pl-1">
+        <span class="w-7 h-7 rounded-lg bg-[#1a73e8] grid place-items-center"><span class="ms text-white" style="font-size:18px">camera</span></span>
+        <span class="text-[21px] font-bold tracking-tight">Fotos</span>
+      </div>
+    </div>
+    <div class="px-4 pb-2">
+      <button id="btnAdd" class="w-full h-12 rounded-full bg-[#1a73e8] text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#1b66c9] active:scale-[.98] transition">
+        <span class="ms" style="font-size:20px">add</span>Adicionar
+      </button>
+    </div>
+    <nav class="flex-1 py-3 overflow-y-auto px-3 space-y-1">
+      <button class="navitem active" data-view="lib"><span class="ms">photo_library</span>Biblioteca</button>
+      <button class="navitem" data-view="all"><span class="ms">grid_view</span>Ver tudo</button>
+      <button class="navitem" data-view="photos"><span class="ms">camera</span>Fotos</button>
+      <button class="navitem" data-view="videos"><span class="ms">videocam</span>Vídeos</button>
+      <button class="navitem" data-view="fav"><span class="ms">favorite</span>Favoritos</button>
+    </nav>
+    <div class="px-6 py-4 border-t border-[var(--line)] text-xs text-[var(--mut)] flex items-center gap-2">
+      <span class="ms" style="font-size:18px">storage</span>
+      <span id="storageTxt">0 KB em uso · só neste dispositivo</span>
+    </div>
+  </aside>
+
+  <!-- ===== Conteúdo ===== -->
+  <div class="flex-1 flex flex-col min-w-0 h-full">
+    <header class="h-[68px] flex items-center gap-2 px-4 md:px-6 shrink-0">
+      <button class="navicon md:hidden" id="btnMenu"><span class="ms">menu</span></button>
+      <div class="flex-1 max-w-[720px] mx-auto relative">
+        <span class="ms absolute left-4 top-1/2 -translate-y-1/2 text-[var(--mut)]" style="font-size:21px">search</span>
+        <input id="search" type="text" placeholder="Pesquisa nos teus photos e vídeos"
+          class="w-full h-12 rounded-full bg-[var(--chipbg)] pl-12 pr-4 text-[14px] outline-none border border-transparent transition focus:bg-white focus:border-[#1a73e8] focus:shadow-[0_1px_6px_rgba(32,33,36,.12)]">
+      </div>
+      <div class="w-9 h-9 rounded-full bg-gradient-to-br from-[#1a73e8] to-[#1967d2] text-white grid place-items-center shrink-0" title="Perfil">
+        <span class="ms" style="font-size:19px">camera</span>
+      </div>
+    </header>
+
+    <main id="main" class="flex-1 overflow-y-auto">
+      <div class="px-4 md:px-7 pt-3 pb-14">
+
+        <!-- estado vazio -->
+        <div id="empty" class="hidden flex-col items-center justify-center text-center pt-24 pb-10">
+          <svg width="132" height="132" viewBox="0 0 132 132" fill="none">
+            <rect x="16" y="16" width="100" height="100" rx="20" fill="#e8f0fe"/>
+            <circle cx="92" cy="46" r="13" fill="#fbbc04"/>
+            <path d="M34 96 L62 58 L82 80 L92 68 L104 84 V102 a8 8 0 0 1 -8 8 H42 a8 8 0 0 1 -8 -8 Z" fill="#34a853"/>
+            <path d="M34 110 L56 84 L70 98 L78 90 L96 110 Z" fill="#188038"/>
+          </svg>
+          <h1 class="text-[26px] font-semibold mt-6">Começa a construir a tua coleção</h1>
+          <p class="text-[14px] text-[var(--mut)] mt-2 max-w-sm">Os teus photos e vídeos ficam guardados apenas neste dispositivo — nada é enviado para lado nenhum.</p>
+          <div class="flex gap-3 mt-7">
+            <button id="emptyCam" class="h-12 px-6 rounded-full bg-[#1a73e8] text-white text-sm font-bold flex items-center gap-2 hover:bg-[#1b66c9] active:scale-[.97] transition">
+              <span class="ms" style="font-size:20px">photo_camera</span>Fotografar
+            </button>
+            <button id="emptyAdd" class="h-12 px-6 rounded-full border border-[#dadce0] text-sm font-bold flex items-center gap-2 hover:bg-[var(--chipbg)] active:scale-[.97] transition">
+              <span class="ms text-[var(--mut)]" style="font-size:20px">upload</span>Adicionar
+            </button>
+          </div>
+        </div>
+
+        <!-- sem resultados -->
+        <div id="noRes" class="hidden flex-col items-center text-center pt-28 pb-10">
+          <span class="ms text-[#dadce0]" style="font-size:56px">search_off</span>
+          <p class="text-[15px] font-semibold mt-4">Não há resultados</p>
+          <p id="noResTxt" class="text-[13px] text-[var(--mut)] mt-1"></p>
+        </div>
+
+        <!-- conteúdo -->
+        <div id="content">
+          <!-- momentos -->
+          <section id="secMomentos" class="mb-7">
+            <h3 class="text-[16px] font-semibold mb-3">Momentos</h3>
+            <div id="momentos" class="flex gap-3 overflow-x-auto pb-2"></div>
+          </section>
+
+          <!-- favoritos -->
+          <section id="secFavs" class="mb-7 hidden">
+            <h3 class="text-[16px] font-semibold mb-3">Favoritos</h3>
+            <div id="favs" class="flex gap-2 overflow-x-auto pb-2"></div>
+          </section>
+
+          <!-- grelha -->
+          <section>
+            <div class="flex items-center justify-between mb-3">
+              <h3 id="gridTitle" class="text-[16px] font-semibold">Destaques</h3>
+              <button id="btnShootTop" class="text-sm font-bold text-[#1a73e8] hover:underline hidden md:inline-flex items-center gap-1.5">
+                <span class="ms" style="font-size:18px">photo_camera</span>Fotografar
+              </button>
+            </div>
+            <div id="grid" class="grid-area"></div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===== Visor de detalhe ===== -->
+<div id="viewer" class="fixed inset-0 z-40 hidden bg-white">
+  <div class="w-full h-full flex flex-col md:flex-row min-h-0">
+    <div id="vMediaWrap" class="flex-1 relative flex items-center justify-center min-h-0 bg-white transition-colors">
+      <div id="vMedia" class="max-w-full max-h-full flex items-center justify-center p-4"></div>
+      <button id="vClose" class="vbtn absolute top-3 left-3 bg-white shadow-md z-10"><span class="ms">close</span></button>
+      <button id="vPrev" class="vbtn absolute left-3 top-1/2 -translate-y-1/2 bg-white shadow-md z-10"><span class="ms">arrow_back</span></button>
+      <button id="vNext" class="vbtn absolute right-3 top-1/2 -translate-y-1/2 bg-white shadow-md z-10"><span class="ms">arrow_forward</span></button>
+    </div>
+    <aside class="w-full md:w-[300px] shrink-0 border-t md:border-t-0 md:border-l border-[var(--line)] px-6 py-5 overflow-y-auto max-h-[45%] md:max-h-none">
+      <div class="flex gap-1 mb-5">
+        <button id="vFav" class="vbtn" title="Favorito"><span class="ms" id="vFavIc">favorite</span></button>
+        <button id="vDown" class="vbtn" title="Descarregar"><span class="ms">download</span></button>
+        <button id="vDel" class="vbtn danger" title="Eliminar"><span class="ms">delete</span></button>
+      </div>
+      <p id="vDate" class="text-[20px] font-medium leading-snug"></p>
+      <p class="text-[13px] font-bold text-[var(--mut)] mt-5 mb-2">Detalhes</p>
+      <div class="text-[14px] divide-y divide-[var(--line)]" id="vDetails"></div>
+      <div class="mt-5 bg-[#f8f9fa] rounded-xl p-3 text-xs text-[var(--mut)] leading-relaxed">
+        <span class="ms inline-block align-[-3px]" style="font-size:15px">lock</span>
+        Os teus ficheiros ficam guardados apenas neste dispositivo (IndexedDB).
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- ===== Câmara (modal) ===== -->
+<div id="camModal" class="fixed inset-0 z-50 hidden bg-[#0c0e11] flex-col">
+  <div class="h-16 flex items-center justify-between px-3 md:px-5 shrink-0">
+    <button id="camClose" class="w-11 h-11 rounded-full grid place-items-center text-white/85 hover:bg-white/10 transition" title="Fechar (Esc)">
+      <span class="ms">close</span>
+    </button>
+    <div class="flex items-center gap-1">
+      <button id="tabPhoto" class="camtab active">Foto</button>
+      <button id="tabVideo" class="camtab">Vídeo</button>
+    </div>
+    <select id="camRes" class="h-9 rounded-full bg-white/10 text-white text-xs font-semibold px-3 outline-none cursor-pointer" title="Resolução">
+      <option value="480">480p</option>
+      <option value="720" selected>720p</option>
+      <option value="1080">1080p</option>
+    </select>
+  </div>
+
+  <div class="flex-1 flex items-center justify-center px-3 min-h-0">
+    <div id="vfBox" class="relative w-full max-w-[1040px] aspect-video max-h-full bg-black rounded-xl overflow-hidden">
+      <video id="cam" class="w-full h-full object-contain" autoplay playsinline muted></video>
+      <div class="absolute inset-0 vignette pointer-events-none"></div>
+      <div id="camGrid" class="absolute inset-0 hidden pointer-events-none">
+        <span class="gv1"></span><span class="gv2"></span><span class="gh1"></span><span class="gh2"></span>
+      </div>
+      <span class="corner c-tl"></span><span class="corner c-tr"></span>
+      <span class="corner c-bl"></span><span class="corner c-br"></span>
+
+      <div class="absolute top-0 inset-x-0 flex items-start justify-between p-4 pointer-events-none">
+        <span id="recBadge" class="hidden items-center gap-2 bg-black/60 backdrop-blur-sm rounded-md px-2.5 py-1.5 border border-[#ea4335]/50">
+          <span class="w-2 h-2 rounded-full bg-[#ea4335]" style="animation:blink 1s steps(2) infinite"></span>
+          <span class="mono text-[11px] font-bold text-[#ea4335]">REC <span id="recTime">00:00</span></span>
+        </span>
+        <span id="camHud" class="mono text-[11px] text-white/75 bg-black/50 backdrop-blur-sm rounded-md px-2.5 py-1.5">--:--:--</span>
+      </div>
+      <div class="absolute bottom-0 inset-x-0 flex items-end justify-between p-4 pointer-events-none">
+        <span id="camInfo" class="hidden text-[11px] font-bold tracking-[0.12em] uppercase text-white/90 bg-black/50 backdrop-blur-sm rounded-md px-2.5 py-1.5"></span>
+        <span id="torchBadge" class="hidden items-center gap-1.5 text-[11px] font-bold tracking-[0.12em] uppercase text-[#fbbc04] bg-black/50 backdrop-blur-sm rounded-md px-2.5 py-1.5">
+          <span class="ms f" style="font-size:15px">flash_on</span>Lanterna
+        </span>
+      </div>
+
+      <div id="focusRing"></div>
+      <div id="camFlash"></div>
+      <div id="camCount" class="hidden absolute inset-0 grid place-items-center pointer-events-none"><span id="cdNum"></span></div>
+
+      <div id="camLoading" class="absolute inset-0 grid place-items-center bg-black">
+        <div class="flex flex-col items-center gap-4">
+          <span class="ms text-[#1a73e8] spin-slow" style="font-size:52px">camera</span>
+          <p class="text-sm text-white/60 font-semibold">A ligar a câmara…</p>
+        </div>
+      </div>
+      <div id="camError" class="hidden absolute inset-0 grid place-items-center bg-black/90">
+        <div class="flex flex-col items-center gap-3 px-8 text-center">
+          <span class="ms text-[#ea4335]" style="font-size:46px">no_photography</span>
+          <p class="font-semibold text-[15px]">Câmara indisponível</p>
+          <p id="camErrTxt" class="text-[13px] text-white/55 max-w-sm leading-relaxed"></p>
+          <button id="camRetry" class="mt-1 px-5 py-2.5 rounded-full bg-white text-[#111] text-sm font-bold hover:bg-white/90 active:scale-95 transition">Tentar novamente</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- faixa de filtros -->
+  <div id="filterStrip" class="hidden px-6 pt-1 pb-2">
+    <div class="flex gap-2 overflow-x-auto justify-start md:justify-center max-w-[1040px] mx-auto"></div>
+  </div>
+
+  <div class="flex items-center justify-between gap-2 px-5 md:px-8 pb-5 pt-3 shrink-0 max-w-[1100px] mx-auto w-full">
+    <button id="camLast" class="w-14 h-14 rounded-xl overflow-hidden border-2 border-white/40 bg-white/5 grid place-items-center shrink-0 relative" title="Último capturado">
+      <span id="camLastMedia" class="ms text-white/40" style="font-size:24px">photo</span>
+    </button>
+    <button id="shutter" class="shutter" title="Capturar / Gravar (Espaço)">
+      <span id="shutterInner" class="shutter-inner"></span>
+    </button>
+    <div class="flex gap-0.5 md:gap-1">
+      <button id="cFilter" class="cbtn" title="Filtros"><span class="ms">gradient</span></button>
+      <button id="cTimer" class="cbtn" title="Temporizador"><span class="ms">timer</span></button>
+      <button id="cGrid" class="cbtn" title="Grede"><span class="ms">grid_on</span></button>
+      <button id="cMirror" class="cbtn" title="Espelhar"><span class="ms">flip</span></button>
+      <button id="cTorch" class="cbtn" title="Lanterna"><span class="ms">flash_on</span></button>
+      <button id="cSwitch" class="cbtn" title="Trocar câmara"><span class="ms">flip_camera_android</span></button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept="image/*,video/*" multiple class="hidden">
+
+<script>
+(function(){
+'use strict';
+const $ = id => document.getElementById(id);
+const video = $('cam');
+const p2 = n => String(n).padStart(2,'0');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const uid = () => 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+function fmtSize(b){ if(b < 1048576) return Math.max(1,Math.round(b/1024))+' KB'; return (b/1048576).toFixed(1).replace('.',',')+' MB'; }
+function fmtDur(s){ s=Math.max(0,Math.round(s||0)); return p2(Math.floor(s/60))+':'+p2(s%60); }
+function fmtTC(ms){ const t=Math.floor(ms/1000), f=Math.floor((ms%1000)/33.333); return p2(Math.floor(t/60)%60)+':'+p2(t%60)+':'+p2(f); }
+function stamp(){ const d=new Date(); return `CAMARA_${d.getFullYear()}${p2(d.getMonth()+1)}${p2(d.getDate())}_${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}`; }
+function dateLong(ts){ const d=new Date(ts); return d.toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'})+' · '+p2(d.getHours())+':'+p2(d.getMinutes()); }
+function shortDay(ts){ const d=new Date(ts), t=new Date(); const day=x=>x.toDateString();
+  if(day(d)===day(t)) return 'Hoje'; if(day(d)===day(new Date(t-864e5))) return 'Ontem';
+  return d.toLocaleDateString('pt-PT',{day:'2-digit',month:'short'}); }
+
+/* ---------- snackbar ---------- */
+let snackTimer = null;
+function snackbar(msg, action, onAction){
+  let el = document.querySelector('.snack');
+  if(el) el.remove();
+  if(snackTimer) clearTimeout(snackTimer);
+  el = document.createElement('div');
+  el.className = 'snack';
+  el.innerHTML = '<span class="snack-msg"></span>' + (action ? '<span class="act"></span>' : '');
+  el.querySelector('.snack-msg').textContent = msg;
+  if(action){
+    const a = el.querySelector('.act'); a.textContent = action;
+    a.addEventListener('click', () => { el.remove(); onAction && onAction(); });
+  }
+  document.body.appendChild(el);
+  snackTimer = setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 320); }, 4200);
+}
+
+/* ---------- IndexedDB ---------- */
+const db = (() => {
+  let _db = null;
+  function open(){
+    if(_db) return Promise.resolve(_db);
+    return new Promise((res, rej) => {
+      const r = indexedDB.open('fotos-app', 1);
+      r.onupgradeneeded = () => { const d = r.result; if(!d.objectStoreNames.contains('items')) d.createObjectStore('items',{keyPath:'id'}); };
+      r.onsuccess = () => { _db = r.result; res(_db); };
+      r.onerror = () => rej(r.error);
+    });
+  }
+  const tx = (mode, fn) => open().then(d => new Promise((res, rej) => {
+    const q = d.transaction('items', mode).objectStore('items')[fn] ? d.transaction('items', mode).objectStore('items')[fn]() : null;
+    q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error);
+  }));
+  return {
+    all:  () => new Promise(async (res, rej) => { try{ const d = await open(); const q = d.transaction('items').objectStore('items').getAll(); q.onsuccess = () => res(q.result || []); q.onerror = () => rej(q.error); }catch(e){ res([]); } }),
+    put:  async it => { try{ const d = await open(); await new Promise((res,rej)=>{ const q=d.transaction('items','readwrite').objectStore('items').put(it); q.onsuccess=res; q.onerror=rej;}); }catch(e){} },
+    del:  async id => { try{ const d = await open(); await new Promise((res,rej)=>{ const q=d.transaction('items','readwrite').objectStore('items').delete(id); q.onsuccess=res; q.onerror=rej;}); }catch(e){} }
+  };
+})();
+
+/* ---------- estado ---------- */
+const items = [];
+const urls = new Map();
+let view = 'lib', q = '';
+let viewerList = [], viewerIdx = -1;
+
+const FILTERS = {
+  original:{label:'Original',css:'none'}, pnb:{label:'P&B',css:'grayscale(1) contrast(1.05)'},
+  sepia:{label:'Sépia',css:'sepia(0.9)'}, vivido:{label:'Vívido',css:'saturate(1.6) contrast(1.15)'},
+  quente:{label:'Quente',css:'sepia(0.35) saturate(1.4) hue-rotate(-8deg)'},
+  frio:{label:'Frio',css:'saturate(1.1) contrast(1.05) hue-rotate(14deg) brightness(1.03)'},
+  nevoa:{label:'Névoa',css:'sepia(0.22) contrast(0.9) brightness(1.12) saturate(0.85)'}
+};
+const RES = {480:{w:640,h:480},720:{w:1280,h:720},1080:{w:1920,h:1080}};
+const RES_LABEL = {480:'640×480',720:'1280×720',1080:'1920×1080'};
+
+function getFiltered(){
+  let list = [...items].sort((a,b) => b.date - a.date);
+  if(q){
+    const s = q.toLowerCase();
+    list = list.filter(it => it.name.toLowerCase().includes(s) || (it.type==='photo'?'foto':'vídeo').includes(s));
+    return list;
+  }
+  if(view === 'photos') list = list.filter(it => it.type === 'photo');
+  if(view === 'videos') list = list.filter(it => it.type === 'video');
+  if(view === 'fav') list = list.filter(it => it.fav);
+  return list;
+}
+
+/* ---------- renderização ---------- */
+function mediaTag(it, cls){
+  const u = urls.get(it.id); if(!u) return '';
+  return it.type === 'photo'
+    ? `<img src="${u}" alt="${it.name}" loading="lazy" class="${cls}"${it.css && it.css!=='none' ? ` style="filter:${it.css}"` : ''}>`
+    : `<video src="${u}" muted playsinline preload="metadata" class="${cls}"></video>`;
+}
+function favMark(){
+  return `<span class="fav-mark"><svg width="13" height="13" viewBox="0 0 24 24" fill="#ea4335"><path d="M12 21.35 10.55 20.03C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></span>`;
+}
+function renderMain(){
+  const total = items.reduce((s,it) => s + (it.blob.size || 0), 0);
+  $('storageTxt').textContent = (items.length ? `${items.length} ficheiro${items.length>1?'s':''} · ${fmtSize(total)} em uso` : 'Vazio') + ' · só neste dispositivo';
+
+  const list = getFiltered();
+  const hasAny = items.length > 0;
+  $('empty').classList.toggle('hidden', hasAny);
+  $('empty').classList.toggle('flex', !hasAny);
+  $('noRes').classList.toggle('hidden', hasAny || !q);
+  $('noRes').classList.toggle('flex', !hasAny && !!q);
+  if(q && hasAny && list.length === 0){
+    $('noResTxt').textContent = `Não há resultados para “${q}”.`;
+  }
+  $('content').classList.toggle('hidden', !hasAny || (q && list.length === 0));
+
+  // momentos
+  const showM = view === 'lib' && !q;
+  const photos = list.filter(it => it.type === 'photo');
+  $('secMomentos').style.display = (showM && photos.length >= 3) ? '' : 'none';
+  const mo = $('momentos'); mo.innerHTML = '';
+  if(showM && photos.length >= 3){
+    const groups = [];
+    for(let i = 0; i < Math.min(photos.length, 9); i += 3) groups.push(photos.slice(i, i+3));
+    groups.slice(0, 4).forEach(g => {
+      const card = document.createElement('div');
+      card.className = 'm-card';
+      const layout = g.length === 3 ? 'grid grid-cols-2 grid-rows-2 h-full' : g.length === 2 ? 'grid grid-cols-2 h-full' : 'grid h-full';
+      card.innerHTML = `<div class="${layout}">` + g.map((it,i) =>
+        `<div class="relative${g.length===3 && i===0 ? ' col-span-2':''} overflow-hidden"><img src="${urls.get(it.id)}" class="w-full h-full object-cover"${it.css && it.css!=='none'?` style="filter:${it.css}"`:''}></div>`
+      ).join('') + `</div><div class="m-label">Momento · ${shortDay(g[0].date)}</div>`;
+      card.addEventListener('click', () => openViewer(g[0].id));
+      mo.appendChild(card);
+    });
+  }
+
+  // favoritos
+  const showF = view === 'lib' && !q;
+  const favs = list.filter(it => it.fav);
+  $('secFavs').classList.toggle('hidden', !(showF && favs.length));
+  const fo = $('favs'); fo.innerHTML = '';
+  if(showF && favs.length){
+    favs.slice(0, 20).forEach(it => {
+      const d = document.createElement('div');
+      d.className = 'favs-item';
+      d.innerHTML = mediaTag(it, 'w-full h-full object-cover') + (it.fav ? favMark() : '');
+      d.addEventListener('click', () => openViewer(it.id));
+      fo.appendChild(d);
+    });
+  }
+
+  // grelha
+  const titles = {lib:'Destaques', all:'Ver tudo', photos:'Fotos', videos:'Vídeos', fav:'Favoritos'};
+  $('gridTitle').textContent = q ? `Resultados para “${q}” (${list.length})` : (titles[view] || 'Destaques');
+  const g = $('grid'); g.innerHTML = '';
+  if(!q && (view === 'lib' || view === 'all')){
+    const t1 = document.createElement('button');
+    t1.className = 'tile';
+    t1.innerHTML = '<span class="ms">upload</span><span>Adicionar</span>';
+    t1.addEventListener('click', () => $('fileInput').click());
+    g.appendChild(t1);
+    const t2 = document.createElement('button');
+    t2.className = 'tile';
+    t2.innerHTML = '<span class="ms">photo_camera</span><span>Fotografar</span>';
+    t2.addEventListener('click', openCam);
+    g.appendChild(t2);
+  }
+  list.forEach(it => {
+    const d = document.createElement('div');
+    d.className = 'ph-item';
+    d.innerHTML = mediaTag(it, 'w-full h-full object-cover')
+      + (it.type === 'video'
+        ? `<span class="play-mark"><span class="w-9 h-9 rounded-full bg-black/45 grid place-items-center"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></span></span><span class="badge-dur">${fmtDur(it.dur)}</span>`
+        : '')
+      + (it.fav ? favMark() : '');
+    d.addEventListener('click', () => openViewer(it.id));
+    g.appendChild(d);
+  });
+
+  if(viewerIdx >= 0 && viewerList[viewerIdx] && document.getElementById('viewer').classList.contains('hidden') === false){
+    // mantém o visor sincronizado (o render do visor é feito à parte)
+  }
+  updateCamLast();
+}
+
+/* ---------- ações de itens ---------- */
+async function addItem(type, blob, name, extra){
+  const it = Object.assign({id:uid(), type, blob, name, date:Date.now(), fav:false, dur:0}, extra || {});
+  urls.set(it.id, URL.createObjectURL(blob));
+  items.unshift(it);
+  db.put(it);
+  renderMain();
+  return it;
+}
+function probeVideo(url){
+  return new Promise(res => {
+    const v = document.createElement('video');
+    v.preload = 'metadata';
+    v.onloadedmetadata = () => res(v.duration || 0);
+    v.onerror = () => res(0);
+    v.src = url;
+  });
+}
+async function addFiles(files){
+  let added = 0;
+  for(const f of files){
+    const isImg = f.type.startsWith('image/'), isVid = f.type.startsWith('video/');
+    if(!isImg && !isVid) continue;
+    const u = URL.createObjectURL(f);
+    const dur = isVid ? await probeVideo(u) : 0;
+    const it = {id:uid(), type: isVid?'video':'photo', name:f.name, blob:f, date:f.lastModified||Date.now(), fav:false, dur};
+    urls.set(it.id, u);
+    items.unshift(it);
+    db.put(it);
+    added++;
+  }
+  if(added){ renderMain(); snackbar(added === 1 ? 'Ficheiro adicionado' : added + ' ficheiros adicionados'); }
+}
+function deleteItem(id){
+  const i = items.findIndex(it => it.id === id);
+  if(i < 0) return;
+  const it = items.splice(i, 1)[0];
+  const u = urls.get(id);
+  if(u) URL.revokeObjectURL(u);
+  urls.delete(id);
+  db.del(id);
+  if(viewerIdx >= 0){
+    const vi = viewerList.findIndex(x => x.id === id);
+    if(vi === viewerIdx){
+      if(viewerList.length <= 1) closeViewer();
+      else { viewerList.splice(vi, 1); renderViewer(); }
+    }
+  }
+  renderMain();
+  snackbar('Removido da biblioteca', 'Anular', () => {
+    items.unshift(it);
+    urls.set(it.id, URL.createObjectURL(it.blob));
+    db.put(it);
+    renderMain();
+  });
+}
+function toggleFav(id){
+  const it = items.find(x => x.id === id);
+  if(!it) return;
+  it.fav = !it.fav;
+  db.put(it);
+  renderMain();
+  if(viewerIdx >= 0 && viewerList[viewerIdx] && viewerList[viewerIdx].id === id) renderViewer();
+  snackbar(it.fav ? 'Adicionado aos favoritos' : 'Removido dos favoritos');
+}
+function downloadItem(id){
+  const it = items.find(x => x.id === id);
+  if(!it) return;
+  const a = document.createElement('a');
+  a.href = urls.get(id); a.download = it.name;
+  document.body.appendChild(a); a.click(); a.remove();
+  snackbar('A descarregar ' + it.name);
+}
+
+/* ---------- visor ---------- */
+function openViewer(id){
+  const list = getFiltered();
+  let i = list.findIndex(x => x.id === id);
+  if(i < 0){ viewerList = [...items].sort((a,b)=>b.date-a.date); viewerIdx = viewerList.findIndex(x => x.id === id); }
+  else { viewerList = list; viewerIdx = i; }
+  if(viewerIdx < 0) return;
+  $('viewer').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  renderViewer();
+}
+function closeViewer(){
+  $('viewer').classList.add('hidden');
+  $('vMedia').innerHTML = '';
+  viewerIdx = -1;
+  document.body.style.overflow = '';
+}
+function navViewer(d){
+  if(viewerIdx < 0) return;
+  const ni = viewerIdx + d;
+  if(ni < 0 || ni >= viewerList.length) return;
+  viewerIdx = ni;
+  renderViewer();
+}
+function renderViewer(){
+  const it = viewerList[viewerIdx];
+  if(!it){ closeViewer(); return; }
+  const u = urls.get(it.id);
+  $('vMediaWrap').className = 'flex-1 relative flex items-center justify-center min-h-0 transition-colors ' + (it.type === 'video' ? 'bg-black' : 'bg-white');
+  $('vMedia').innerHTML = it.type === 'photo'
+    ? `<img src="${u}" alt="${it.name}" class="max-w-full max-h-full object-contain" style="max-height:100%;${it.css && it.css!=='none' ? 'filter:'+it.css+';':''}">`
+    : `<video src="${u}" controls autoplay playsinline class="max-w-full max-h-full" style="max-height:100%"></video>`;
+  $('vDate').textContent = dateLong(it.date);
+  const ext = (it.name.split('.').pop() || '').toUpperCase();
+  $('vDetails').innerHTML =
+    row('Tipo', it.type === 'photo' ? 'Foto' : 'Vídeo') +
+    (it.dur ? row('Duração', fmtDur(it.dur)) : '') +
+    row('Formato', ext || '—') +
+    row('Tamanho', fmtSize(it.blob.size || 0)) +
+    row('Nome', `<span class="truncate max-w-[180px] inline-block align-bottom" title="${it.name}">${it.name}</span>`);
+  $('vPrev').style.opacity = viewerIdx === 0 ? '.3' : '1';
+  $('vNext').style.opacity = viewerIdx === viewerList.length - 1 ? '.3' : '1';
+  const ic = $('vFavIc');
+  ic.textContent = 'favorite';
+  ic.classList.toggle('f', !!it.fav);
+  ic.style.color = it.fav ? '#ea4335' : '';
+  function row(k, v){ return `<div class="flex justify-between gap-4 py-1.5"><span class="text-[var(--mut)] shrink-0">${k}</span><span class="font-medium text-right">${v}</span></div>`; }
+}
+
+/* ---------- câmara ---------- */
+const cam = {
+  open:false, ui:'loading', busy:false, facing:'user', res:720, mirror:true, grid:false,
+  timer:0, filter:'original', mode:'photo', torch:false, torchSupported:false,
+  isRecording:false, rec:null, chunks:[], recStart:0, countdown:false, startTime:0, fps:null
+};
+let stream = null, hudRes = '';
+
+function openCam(){
+  if(cam.open) return;
+  cam.open = true;
+  $('camModal').classList.remove('hidden');
+  $('camModal').classList.add('flex');
+  setCamMode(cam.mode);
+  startCam();
+}
+function closeCam(){
+  if(cam.isRecording && cam.rec) cam.rec.stop();
+  stopStream();
+  cam.open = false;
+  cam.ui = 'loading';
+  $('camModal').classList.add('hidden');
+  $('camModal').classList.remove('flex');
+  renderMain();
+}
+function stopStream(){ if(stream){ stream.getTracks().forEach(t => t.stop()); stream = null; } }
+function setCamUI(state, err){
+  cam.ui = state;
+  $('camLoading').style.display = state === 'loading' ? 'grid' : 'none';
+  $('camError').classList.toggle('hidden', state !== 'error');
+  if(state === 'error') $('camErrTxt').textContent = err || 'Erro desconhecido.';
+  $('shutter').classList.toggle('busy', state !== 'active');
+}
+function camErr(e){
+  if(e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') return 'Permissão negada. Verifica as permissões do site no browser e tenta novamente.';
+  if(e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') return 'Não foi detetada nenhuma câmara neste dispositivo.';
+  if(e.name === 'NotReadableError' || e.name === 'TrackStartError') return 'A câmara está a ser usada por outra aplicação. Fecha-a e tenta novamente.';
+  if(e.name === 'NotSupportedError') return 'O browser não suporta acesso a câmara. Usa Chrome ou Firefox, em HTTPS ou localhost.';
+  return 'Não foi possível ligar a câmara.' + (e.message ? ' (' + e.message + ')' : '');
+}
+async function startCam(msg){
+  if(cam.busy) return;
+  cam.busy = true;
+  if(msg) snackbar(msg);
+  setCamUI('loading');
+  stopStream();
+  const r = RES[cam.res];
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({ audio:false, video:{ facingMode:cam.facing, width:{ideal:r.w}, height:{ideal:r.h} } });
+  }catch(e){
+    setCamUI('error', camErr(e));
+    cam.busy = false;
+    return;
+  }
+  video.srcObject = stream;
+  await video.play().catch(() => {});
+  const track = stream.getVideoTracks()[0];
+  cam.torchSupported = !!(track.getCapabilities && track.getCapabilities().torch);
+  cam.torch = false;
+  updateTorch();
+  track.onended = () => { if(stream && stream.getVideoTracks()[0] === track && cam.open) setCamUI('error', 'A câmara foi desligada.'); };
+  cam.startTime = Date.now();
+  setCamUI('active');
+  cam.busy = false;
+}
+let fpsLastT = null;
+if(video.requestVideoFrameCallback){
+  const fpsCb = now => {
+    if(fpsLastT !== null){ const dt = now - fpsLastT; if(dt > 0 && dt < 500) cam.fps = Math.min(60, Math.round(1000/dt)); }
+    fpsLastT = now;
+    video.requestVideoFrameCallback(fpsCb);
+  };
+  video.addEventListener('loadedmetadata', () => { video.requestVideoFrameCallback(fpsCb); });
+}
+video.addEventListener('loadedmetadata', () => { hudRes = video.videoWidth + '×' + video.videoHeight; });
+setInterval(() => {
+  if(!cam.open || cam.ui !== 'active') return;
+  const tc = fmtTC(Date.now() - cam.startTime);
+  $('camHud').textContent = tc + ' · ' + RES_LABEL[cam.res] + (cam.fps ? ' · ' + cam.fps + ' fps' : '');
+  if(cam.isRecording) $('recTime').textContent = fmtDur((Date.now() - cam.recStart) / 1000);
+}, 200);
+
+function beep(freq, dur){
+  try{
+    const AC = window.AudioContext || window.webkitAudioContext;
+    beep.ctx = beep.ctx || new AC();
+    const o = beep.ctx.createOscillator(), g = beep.ctx.createGain();
+    o.type = 'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.08, beep.ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, beep.ctx.currentTime + dur);
+    o.connect(g); g.connect(beep.ctx.destination);
+    o.start(); o.stop(beep.ctx.currentTime + dur);
+  }catch(e){}
+}
+
+/* toggles da câmara */
+function applyMirror(){ video.style.transform = cam.mirror ? 'scaleX(-1)' : 'none'; }
+function toggleMirror(){ cam.mirror = !cam.mirror; applyMirror(); $('cMirror').classList.toggle('active', cam.mirror); }
+function toggleGrid(){ cam.grid = !cam.grid; $('camGrid').classList.toggle('hidden', !cam.grid); $('cGrid').classList.toggle('active', cam.grid); }
+function cycleTimer(){
+  const seq = [0,3,10];
+  cam.timer = seq[(seq.indexOf(cam.timer) + 1) % seq.length];
+  $('cTimer').classList.toggle('active', cam.timer > 0);
+  $('cTimer').title = 'Temporizador ' + (cam.timer ? cam.timer + 's' : 'off');
+  updateCamInfo();
+}
+function updateTorch(){ $('cTorch').classList.toggle('active', cam.torch); $('torchBadge').classList.toggle('hidden', !cam.torch); $('torchBadge').classList.toggle('flex', cam.torch); }
+async function toggleTorch(){
+  if(!cam.torchSupported){ snackbar('Lanterna não suportada nesta câmara'); return; }
+  try{
+    await stream.getVideoTracks()[0].applyConstraints({ advanced:[{ torch:!cam.torch }] });
+    cam.torch = !cam.torch;
+    updateTorch();
+  }catch(e){ snackbar('Não foi possível ativar a lanterna'); }
+}
+async function switchCam(){
+  if(cam.busy) return;
+  try{
+    const devs = await navigator.mediaDevices.enumerateDevices();
+    if(devs.filter(d => d.kind === 'videoinput').length < 2){ snackbar('Apenas uma câmara detetada'); return; }
+  }catch(e){}
+  cam.facing = cam.facing === 'user' ? 'environment' : 'user';
+  startCam('A trocar de câmara…');
+}
+function setCamMode(m){
+  cam.mode = m;
+  $('tabPhoto').classList.toggle('active', m === 'photo');
+  $('tabVideo').classList.toggle('active', m === 'video');
+  $('shutterInner').classList.toggle('rec', m === 'video');
+  $('shutter').title = m === 'photo' ? 'Capturar foto (Espaço)' : 'Gravar vídeo (Espaço)';
+}
+function setCamFilter(f){
+  cam.filter = f;
+  video.style.filter = FILTERS[f].css === 'none' ? '' : FILTERS[f].css;
+  document.querySelectorAll('#filterStrip .fchip').forEach(c => c.classList.toggle('active', c.dataset.f === f));
+  updateCamInfo();
+}
+function updateCamInfo(){
+  const parts = [];
+  if(cam.timer) parts.push(cam.timer + 's');
+  const fl = FILTERS[cam.filter].label;
+  if(fl !== 'Original') parts.push(fl);
+  const el = $('camInfo');
+  if(parts.length){ el.textContent = parts.join(' · '); el.classList.remove('hidden'); }
+  else el.classList.add('hidden');
+}
+
+/* filtros (faixa) */
+const stripEl = document.querySelector('#filterStrip > div');
+Object.keys(FILTERS).forEach(k => {
+  const b = document.createElement('button');
+  b.className = 'fchip'; b.dataset.f = k; b.textContent = FILTERS[k].label;
+  b.addEventListener('click', () => setCamFilter(k));
+  stripEl.appendChild(b);
+});
+
+/* captura */
+async function runCountdown(){
+  cam.countdown = true;
+  $('shutter').classList.add('busy');
+  $('camCount').classList.remove('hidden');
+  for(let n = cam.timer; n >= 1; n--){
+    const num = $('cdNum');
+    num.textContent = n;
+    num.classList.remove('cd-pop'); void num.offsetWidth; num.classList.add('cd-pop');
+    beep(880, 0.09);
+    await sleep(1000);
+  }
+  $('camCount').classList.add('hidden');
+  cam.countdown = false;
+  $('shutter').classList.remove('busy');
+  doCapture();
+}
+function doCapture(){
+  if(cam.ui !== 'active') return;
+  beep(1320, 0.07);
+  const fl = $('camFlash');
+  fl.classList.add('on');
+  setTimeout(() => fl.classList.remove('on'), 130);
+  const ring = $('focusRing');
+  ring.classList.remove('show'); void ring.offsetWidth; ring.classList.add('show');
+  const c = document.createElement('canvas');
+  c.width = video.videoWidth || 1280; c.height = video.videoHeight || 720;
+  const ctx = c.getContext('2d');
+  const css = FILTERS[cam.filter].css;
+  if(typeof ctx.filter !== 'undefined' && css !== 'none') ctx.filter = css;
+  if(cam.mirror){ ctx.translate(c.width, 0); ctx.scale(-1, 1); }
+  ctx.drawImage(video, 0, 0, c.width, c.height);
+  c.toBlob(blob => {
+    if(!blob) return;
+    addItem('photo', blob, stamp() + '.jpg', { css });
+    snackbar('Foto adicionada');
+  }, 'image/jpeg', 0.92);
+}
+function toggleRecording(){
+  if(cam.ui !== 'active') return;
+  if(cam.isRecording){ cam.rec.stop(); return; }
+  if(!('MediaRecorder' in window)){ snackbar('Gravação não suportada neste browser'); return; }
+  const mime = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4']
+    .find(m => { try{ return MediaRecorder.isTypeSupported(m); }catch(e){ return false; } }) || '';
+  try{
+    cam.rec = new MediaRecorder(stream, mime ? { mimeType:mime, videoBitsPerSecond:5_000_000 } : { videoBitsPerSecond:5_000_000 });
+  }catch(e){ snackbar('Não foi possível iniciar a gravação'); return; }
+  cam.chunks = [];
+  cam.recStart = Date.now();
+  cam.rec.ondataavailable = e => { if(e.data && e.data.size) cam.chunks.push(e.data); };
+  cam.rec.onstop = () => {
+    const blob = new Blob(cam.chunks, { type: cam.rec.mimeType || 'video/webm' });
+    const dur = (Date.now() - cam.recStart) / 1000;
+    const ext = (cam.rec.mimeType || '').indexOf('mp4') !== -1 ? 'mp4' : 'webm';
+    addItem('video', blob, stamp() + '.' + ext, { dur });
+    cam.isRecording = false;
+    setRecUI(false);
+    snackbar('Vídeo adicionado (' + dur.toFixed(1) + 's)');
+  };
+  cam.rec.start(250);
+  cam.isRecording = true;
+  setRecUI(true);
+  snackbar('A gravar — volta a premir para parar');
+}
+function setRecUI(on){
+  $('recBadge').classList.toggle('hidden', !on);
+  $('recBadge').classList.toggle('flex', on);
+  $('vfBox').classList.toggle('rec-ring', on);
+  $('shutter').classList.toggle('recording', on);
+  if(on) $('recTime').textContent = '00:00';
+}
+function shutterClick(){
+  if(cam.ui !== 'active' || cam.countdown) return;
+  if(cam.mode === 'photo'){
+    if(cam.timer > 0) runCountdown();
+    else doCapture();
+  } else toggleRecording();
+}
+function updateCamLast(){
+  const it = items.reduce((a,b) => (b.date > (a?a.date:0) ? b : a), null);
+  const box = $('camLastMedia');
+  box.innerHTML = '';
+  if(it){
+    const u = urls.get(it.id);
+    if(it.type === 'photo') box.innerHTML = `<img src="${u}" class="w-full h-full object-cover">`;
+    else box.innerHTML = `<video src="${u}" muted playsinline preload="metadata" class="w-full h-full object-cover"></video>`;
+  } else box.innerHTML = '<span class="ms text-white/40" style="font-size:24px">photo</span>';
+}
+
+/* ---------- navegação / eventos ---------- */
+document.querySelectorAll('.navitem').forEach(b => {
+  b.addEventListener('click', () => {
+    view = b.dataset.view;
+    q = ''; $('search').value = '';
+    document.querySelectorAll('.navitem').forEach(x => x.classList.toggle('active', x === b));
+    renderMain();
+    $('sidebar').classList.add('-translate-x-full');
+    $('backdrop').classList.add('hidden');
+  });
+});
+$('search').addEventListener('input', e => { q = e.target.value.trim(); renderMain(); });
+$('btnAdd').addEventListener('click', () => $('fileInput').click());
+$('emptyAdd').addEventListener('click', () => $('fileInput').click());
+$('btnShootTop').addEventListener('click', openCam);
+$('emptyCam').addEventListener('click', openCam);
+$('fileInput').addEventListener('change', e => { addFiles([...e.target.files]); e.target.value = ''; });
+
+// menu móvel
+function toggleMenu(open){
+  const s = $('sidebar'), bd = $('backdrop');
+  const on = open !== undefined ? open : s.classList.contains('-translate-x-full');
+  s.classList.toggle('-translate-x-full', !on);
+  bd.classList.toggle('hidden', !on);
+}
+$('btnMenu').addEventListener('click', () => toggleMenu(true));
+$('btnCloseMenu').addEventListener('click', () => toggleMenu(false));
+$('backdrop').addEventListener('click', () => toggleMenu(false));
+
+// visor
+$('vClose').addEventListener('click', closeViewer);
+$('vPrev').addEventListener('click', () => navViewer(-1));
+$('vNext').addEventListener('click', () => navViewer(1));
+$('vFav').addEventListener('click', () => { const it = viewerList[viewerIdx]; if(it) toggleFav(it.id); });
+$('vDown').addEventListener('click', () => { const it = viewerList[viewerIdx]; if(it) downloadItem(it.id); });
+$('vDel').addEventListener('click', () => { const it = viewerList[viewerIdx]; if(it) deleteItem(it.id); });
+
+// câmara
+$('camClose').addEventListener('click', closeCam);
+$('camRetry').addEventListener('click', () => startCam());
+$('shutter').addEventListener('click', shutterClick);
+$('tabPhoto').addEventListener('click', () => setCamMode('photo'));
+$('tabVideo').addEventListener('click', () => setCamMode('video'));
+$('cFilter').addEventListener('click', () => {
+  $('filterStrip').classList.toggle('hidden');
+  $('cFilter').classList.toggle('active');
+});
+$('cTimer').addEventListener('click', cycleTimer);
+$('cGrid').addEventListener('click', toggleGrid);
+$('cMirror').addEventListener('click', toggleMirror);
+$('cTorch').addEventListener('click', toggleTorch);
+$('cSwitch').addEventListener('click', switchCam);
+$('camRes').addEventListener('change', e => {
+  cam.res = +e.target.value;
+  if(cam.open) startCam('A aplicar ' + RES_LABEL[cam.res] + '…');
+});
+$('camLast').addEventListener('click', () => {
+  const it = items.reduce((a,b) => (b.date > (a?a.date:0) ? b : a), null);
+  const id = it ? it.id : null;
+  closeCam();
+  if(id) setTimeout(() => openViewer(id), 60);
+});
+
+// pré-visualização de vídeos na grelha
+document.addEventListener('pointerover', e => {
+  const v = e.target.closest && e.target.closest('.ph-item video');
+  if(v) v.play().catch(() => {});
+});
+document.addEventListener('pointerout', e => {
+  const v = e.target.closest && e.target.closest('.ph-item video');
+  if(v) v.pause();
+});
+
+// teclado
+document.addEventListener('keydown', e => {
+  if(e.repeat) return;
+  const tag = e.target.tagName;
+  const inField = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+  if(cam.open){
+    if(e.key === 'Escape') closeCam();
+    if(inField || tag === 'BUTTON') return;
+    if(e.key === ' '){ e.preventDefault(); shutterClick(); }
+    else if(e.key.toLowerCase() === 'c') switchCam();
+    else if(e.key.toLowerCase() === 'g') toggleGrid();
+    else if(e.key.toLowerCase() === 'm') toggleMirror();
+    else if(e.key.toLowerCase() === 't') cycleTimer();
+  } else if(!$('viewer').classList.contains('hidden')){
+    if(e.key === 'Escape') closeViewer();
+    else if(e.key === 'ArrowLeft') navViewer(-1);
+    else if(e.key === 'ArrowRight') navViewer(1);
+  } else {
+    if(e.key === '/' && !inField){ e.preventDefault(); $('search').focus(); }
+  }
+});
+
+/* ---------- init ---------- */
+applyMirror();
+$('cMirror').classList.add('active');
+setCamMode('photo');
+renderMain();
+db.all().then(rows => {
+  rows.sort((a,b) => b.date - a.date);
+  rows.forEach(it => { items.push(it); urls.set(it.id, URL.createObjectURL(it.blob)); });
+  renderMain();
+});
+})();
+</script>
+</body>
+</html>
