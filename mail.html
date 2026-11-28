@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contacto & Suporte — FilipeCams</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%);
+      color: #f8fafc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      background-color: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid #334155;
+      border-radius: 20px;
+      padding: 36px 28px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .badge {
+      display: inline-block;
+      background-color: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    p.desc {
+      color: #94a3b8;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      margin-bottom: 22px;
+    }
+
+    .email-box {
+      background-color: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 22px;
+      gap: 10px;
+    }
+
+    .email-box a {
+      color: #38bdf8;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.85rem;
+      word-break: break-all;
+    }
+
+    .btn-copy {
+      background-color: #334155;
+      color: #f8fafc;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+
+    .btn-copy:hover {
+      background-color: #475569;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      font-size: 0.82rem;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    select, textarea {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #334155;
+      background-color: #0f172a;
+      color: #f8fafc;
+      font-size: 0.92rem;
+    }
+
+    select:focus, textarea:focus {
+      outline: none;
+      border-color: #38bdf8;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .btn-submit {
+      width: 100%;
+      background-color: #0284c7;
+      color: #ffffff;
+      border: none;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+      transition: transform 0.15s ease, background-color 0.2s ease;
+      margin-top: 6px;
+    }
+
+    .btn-submit:hover {
+      background-color: #0369a1;
+    }
+
+    .btn-submit:active {
+      transform: scale(0.98);
+    }
+
+    .nav-links {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 22px;
+      padding-top: 16px;
+      border-top: 1px solid #334155;
+      font-size: 0.85rem;
+    }
+
+    .nav-links a {
+      color: #94a3b8;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: #38bdf8;
+    }
+  </style>
+</head>
+<body>
+
+  <main class="container">
+    <span class="badge">FilipeCams · PAP</span>
+    <h1>✉️ Contacto</h1>
+    <p class="desc">Envia dúvidas, feedback sobre o projeto ou pedidos de suporte diretamente para o desenvolvedor.</p>
+
+    <div class="email-box">
+      <a href="mailto:filipepereira8708311@hotmail.com">filipepereira8708311@hotmail.com</a>
+      <button type="button" class="btn-copy" onclick="copiarEmail(this)">Copiar</button>
+    </div>
+
+    <form onsubmit="enviarEmail(event)">
+      <div class="form-group">
+        <label for="assunto">Assunto</label>
+        <select id="assunto" required>
+          <option value="Avaliação / Feedback PAP - FilipeCams">Avaliação / Feedback PAP</option>
+          <option value="Suporte Técnico - FilipeCams">Suporte Técnico</option>
+          <option value="Dúvida sobre Nuvem (Google / OneDrive)">Configuração da Nuvem</option>
+          <option value="Outro Assunto">Outro Assunto</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="mensagem">Mensagem</label>
+        <textarea id="mensagem" placeholder="Escreve aqui a tua mensagem..." required></textarea>
+      </div>
+
+      <button type="submit" class="btn-submit">Enviar E-mail</button>
+    </form>
+
+    <div class="nav-links">
+      <a href="ponte.html">← Voltar ao Portal</a>
+      <a href="https://vercel.app">Abrir App →</a>
+    </div>
+  </main>
+
+  <script>
+    function copiarEmail(btn) {
+      navigator.clipboard.writeText("filipepereira8708311@hotmail.com");
+      btn.textContent = "Copiado!";
+      setTimeout(() => btn.textContent = "Copiar", 2000);
+    }
+
+    function enviarEmail(event) {
+      event.preventDefault();
+      const destinatario = "filipepereira8708311@hotmail.com";
+      const assunto = encodeURIComponent(document.getElementById("assunto").value);
+      const mensagem = encodeURIComponent(document.getElementById("mensagem").value);
+      window.location.href = `mailto:${destinatario}?subject=${assunto}&body=${mensagem}`;
+    }
+  </script>
+
+</body>
+</html>
