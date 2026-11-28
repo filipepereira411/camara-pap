@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FilipeCams — Portal do Projeto PAP</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%);
+      color: #f8fafc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      background-color: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid #334155;
+      border-radius: 20px;
+      padding: 36px 28px;
+      width: 100%;
+      max-width: 440px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .badge {
+      display: inline-block;
+      background-color: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    p.desc {
+      color: #94a3b8;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 28px;
+    }
+
+    .links {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 20px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: transform 0.15s ease, background-color 0.2s ease;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background-color: #0284c7;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+    }
+
+    .btn-primary:hover {
+      background-color: #0369a1;
+    }
+
+    .btn-secondary {
+      background-color: #0f172a;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+    }
+
+    .btn-secondary:hover {
+      background-color: #1e293b;
+      border-color: #475569;
+    }
+
+    .footer {
+      border-top: 1px solid #334155;
+      padding-top: 18px;
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+
+    .footer a {
+      color: #38bdf8;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <main class="container">
+    <span class="badge">Prova de Aptidão Profissional</span>
+    <h1>📸 FilipeCams</h1>
+    <p class="desc">Captura de foto e vídeo com sincronização entre dispositivos e envio direto para a nuvem.</p>
+
+    <div class="links">
+      <a href="https://vercel.app" class="btn btn-primary">
+        🚀 Abrir Aplicação Principal
+      </a>
+
+      <a href="mail.html" class="btn btn-secondary">
+        ✉️ Contacto & Suporte
+      </a>
+
+      <a href="https://github.com" target="_blank" rel="noopener" class="btn btn-secondary">
+        💻 Código-Fonte (GitHub)
+      </a>
+    </div>
+
+    <footer class="footer">
+      <p>Desenvolvido por <strong>Filipe Pereira</strong></p>
+      <p style="margin-top: 4px;">
+        <a href="mailto:filipepereira8708311@hotmail.com">filipepereira8708311@hotmail.com</a>
+      </p>
+    </footer>
+  </main>
+
+</body>
+</html>
